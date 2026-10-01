@@ -1,0 +1,58 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1.2;
+  margin: 0;
+  text-transform: uppercase;
+  /* A long unbroken query must wrap instead of widening the page (no effect otherwise). */
+  overflow-wrap: break-word;
+}
+
+.none {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.faq {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* "Questions" eyebrow (an h2 for the outline, styled as the prototype's div). */
+.eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.q {
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.a {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-text);
+}

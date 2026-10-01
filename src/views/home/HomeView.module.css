@@ -1,0 +1,299 @@
+/* Accueil — sizes copied from the prototype template (lines 143–219). */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* --- Greeting ------------------------------------------------------------ */
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 44px;
+  line-height: 1.1;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.lead {
+  margin: 0;
+  font-size: 17px;
+  color: var(--color-text-muted);
+}
+
+/* --- "Le client demande…" ------------------------------------------------ */
+.asks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.eyebrow {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}
+
+.askGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.ask {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 92px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  border: none;
+  background: var(--color-surface);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  text-align: left;
+  transition: transform 120ms ease;
+}
+.ask:active {
+  transform: scale(var(--press-scale));
+  background: var(--color-col-active);
+}
+
+.askLabel {
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+.askSub {
+  font-size: 14px;
+  color: var(--color-primary);
+}
+
+/* --- Onboarding banner --------------------------------------------------- */
+.onb {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  padding: 14px 22px 14px 14px;
+  border-radius: var(--radius-lg);
+  border: none;
+  background: var(--color-primary);
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  text-align: left;
+  transition: transform 120ms ease;
+}
+.onb:active {
+  transform: scale(0.98);
+}
+
+.onbThumb {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-md);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.onbThumb img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+.onbText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.onbEyebrow {
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.onbTitle {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.onbArrow {
+  font-size: 24px;
+}
+
+/* --- Season of the moment ------------------------------------------------ */
+.season {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.seasonImg {
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+}
+
+.seasonBody {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.seasonMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.dates {
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+.h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1.15;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.tip {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.tipLabel {
+  font-weight: 500;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+/* --- "À préparer" (next season) ----------------------------------------- */
+.next {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 24px;
+  border-radius: var(--radius-lg);
+  background: var(--color-secondary);
+  color: var(--color-on-abricot);
+}
+
+.nextImg {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.nextText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.nextEyebrow {
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.nextTip {
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+/* --- Best sellers -------------------------------------------------------- */
+.best {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bestGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.bestTile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 10px;
+  border-radius: var(--radius-lg);
+  border: 0.5px solid var(--color-border-tertiary);
+  background: var(--color-surface);
+  cursor: pointer;
+  font-family: var(--font-ui);
+}
+@media (hover: hover) {
+  .bestTile:hover { border-color: var(--color-primary); }
+}
+
+.bestImg {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.bestName {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text);
+  text-align: center;
+  line-height: 1.3;
+}
+
+.bestPrice {
+  font-size: 15px;
+  color: var(--color-primary);
+}

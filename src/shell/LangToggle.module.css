@@ -1,0 +1,47 @@
+.toggle {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-pill);
+}
+
+.btn {
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.active {
+  font-weight: 500;
+}
+
+/* Sidebar (landscape): beige track, white active segment. */
+.sidebar {
+  background: var(--color-background-secondary);
+}
+.sidebar .btn {
+  flex: 1;
+  height: 36px;
+}
+.sidebar .active {
+  background: var(--color-surface);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-toggle);
+}
+
+/* Compact top bar (portrait): white track, Ruby Red active segment. */
+.compact {
+  background: var(--color-surface);
+}
+.compact .btn {
+  min-width: 52px;
+  height: 40px;
+}
+.compact .active {
+  background: var(--color-primary);
+  color: #fff;
+}

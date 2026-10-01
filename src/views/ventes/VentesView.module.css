@@ -1,0 +1,165 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Section: H2 + content */
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* --- Formules ------------------------------------------------------------ */
+.combos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.combo {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.comboHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.comboTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.comboName {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.comboWhen {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.comboPrice {
+  font-size: 21px;
+  font-weight: 500;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.tiles {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Product tile: 72 px wide, illustration 44 × 52, name 12 px. */
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 72px;
+  margin: 0;
+  padding: 8px 4px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--color-background-secondary);
+  cursor: pointer;
+  font-family: var(--font-ui);
+}
+
+.tileImg {
+  width: 44px;
+  height: 52px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.tileName {
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--color-text);
+  text-align: center;
+}
+
+/* --- Les bons réflexes ---------------------------------------------------- */
+.reflexes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.reflex {
+  background: var(--color-secondary);
+  color: var(--color-on-abricot);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex;
+  gap: 12px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.reflexN {
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1;
+}
+
+/* --- Associations par produit -------------------------------------------- */
+.list {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 4px 20px;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) minmax(150px, 240px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+}
+
+/* Product name: text button (UA line-height, as in the prototype). */
+.name {
+  margin: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 0;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.cross {
+  font-size: 15px;
+  color: var(--color-primary);
+}
+
+.line {
+  font-style: italic;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-text);
+}

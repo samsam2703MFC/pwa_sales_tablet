@@ -1,0 +1,90 @@
+.aside {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  box-sizing: border-box;
+  padding: 28px 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  background: var(--color-surface);
+  border-right: 0.5px solid var(--color-border-tertiary);
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 10px;
+}
+
+.logo {
+  height: 26px;
+  width: auto;
+  align-self: flex-start;
+}
+
+.book {
+  font-family: var(--font-accent);
+  font-weight: 300;
+  font-size: 16px;
+  color: var(--color-text-muted);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.groupTitle {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-text-muted);
+  padding: 0 16px 8px;
+}
+
+.item {
+  text-align: left;
+  border: none;
+  cursor: pointer;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: 16px;
+}
+@media (hover: hover) {
+  .item:not(.active):hover { background: var(--color-background-secondary); }
+}
+
+.active {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 500;
+}
+
+.foot {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 10px;
+}
+
+.sample {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}

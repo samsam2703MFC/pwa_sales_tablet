@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import type { ProductCardVM } from '../lib/catalog';
 import { useApp } from '../state/store';
 import s from './ProductCard.module.css';
@@ -9,35 +10,44 @@ import s from './ProductCard.module.css';
  */
 export function ProductCard({ p, details = true }: { p: ProductCardVM; details?: boolean }) {
   const { L, actions } = useApp();
+  const id = useId();
+  // Announce the name and price first, then the badges and allergen codes (the DOM order is visual).
+  const labelledBy = [`${id}-n`, `${id}-p`, `${id}-b`, details && `${id}-d`].filter(Boolean).join(' ');
   return (
-    <button type="button" className={s.card} onClick={() => actions.openProduct(p.id)}>
-      <div className={s.media}>
+    <button
+      type="button"
+      className={s.card}
+      onClick={() => actions.openProduct(p.id)}
+      aria-labelledby={labelledBy}
+      aria-describedby={details && p.als.length ? `${id}-a` : undefined}
+    >
+      <span className={s.media}>
         <img src={p.img} alt="" loading="lazy" decoding="async" className={s.img} />
-        <div className={s.badgesL}>
+        <span className={s.badgesL} id={`${id}-b`}>
           {p.seasonal && <span className={s.season}>{p.seasonName}</span>}
           {p.best && <span className={s.best}>{L.top}</span>}
-        </div>
+        </span>
         {details && (
-          <div className={s.badgesR}>
+          <span className={s.badgesR} id={`${id}-d`}>
             {p.vegan && <span className={s.vegan}>VEGAN</span>}
             {p.vege && <span className={s.vege}>{L.vegeS}</span>}
-          </div>
+          </span>
         )}
-      </div>
-      <div className={s.body}>
-        <div className={s.name}>{p.name}</div>
-        <div className={s.priceRow}>
+      </span>
+      <span className={s.body}>
+        <span className={s.name} id={`${id}-n`}>{p.name}</span>
+        <span className={s.priceRow} id={`${id}-p`}>
           <span className={s.price}>{p.price}</span>
           <span className={s.unit}>{p.unit}</span>
-        </div>
+        </span>
         {details && (
-          <div className={s.codes}>
+          <span className={s.codes} id={`${id}-a`}>
             {p.als.map(a => (
               <span key={a} className={s.code}>{a}</span>
             ))}
-          </div>
+          </span>
         )}
-      </div>
+      </span>
     </button>
   );
 }

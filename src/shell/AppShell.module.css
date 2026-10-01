@@ -1,0 +1,36 @@
+.app {
+  display: grid;
+  grid-template-columns: 256px minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--color-bg);
+  font-family: var(--font-ui);
+  color: var(--color-text);
+}
+
+.main {
+  min-width: 0;
+  padding: 0 36px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* Portrait: no sidebar, room at the bottom for the tab bar. */
+.compact {
+  grid-template-columns: minmax(0, 1fr);
+}
+.compact .main {
+  padding: 0 20px 120px;
+}
+
+/* Sticky header block: compact top bar (portrait) + search row. */
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--color-bg);
+  padding: 16px 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

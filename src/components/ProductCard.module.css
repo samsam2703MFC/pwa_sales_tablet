@@ -52,6 +52,7 @@
 }
 
 .badgesR {
+  display: block;
   position: absolute;
   top: 8px;
   right: 8px;
@@ -87,6 +88,7 @@
 }
 
 .name {
+  display: block;
   font-size: 16px;
   font-weight: 500;
   line-height: 1.3;

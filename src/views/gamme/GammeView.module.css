@@ -1,0 +1,50 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* VEGAN toggle — same box as a chip, black outline; on = black fill. */
+.vegan {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  min-height: 52px;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-text);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.veganOn {
+  background: var(--color-text);
+  color: #fff;
+}
+
+/* Vertical rule between the VEGAN toggle and the category chips. */
+.sep {
+  flex: 0 0 1px;
+  background: var(--color-border-secondary);
+  margin: 6px 2px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.count {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}

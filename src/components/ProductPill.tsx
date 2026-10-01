@@ -27,7 +27,7 @@ export function ProductPill({ p, size = 'lg', price = true, hover = false }: {
     >
       <img src={p.img} alt="" loading="lazy" decoding="async" className={s.img} />
       <span className={s.name}>{p.name}</span>
-      {price && p.price && <span className={s.price}>{p.price}</span>}
+      {price && <span className={s.price}>{p.price}</span>}
     </button>
   );
 }

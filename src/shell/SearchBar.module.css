@@ -1,0 +1,47 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.field {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  border: 0.5px solid var(--color-border-secondary);
+}
+
+.field svg {
+  flex: 0 0 auto;
+}
+
+.input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 17px;
+  color: var(--color-text);
+  min-width: 0;
+}
+
+.clear {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 15px;
+  padding: 8px;
+}
+
+.today {
+  font-size: 15px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  text-transform: capitalize;
+}

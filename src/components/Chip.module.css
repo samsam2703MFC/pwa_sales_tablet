@@ -2,6 +2,9 @@
   display: flex;
   gap: 8px;
   overflow-x: auto;
+  /* Room for the chips' focus ring, which overflow would otherwise clip; layout unchanged. */
+  padding-block: 4px;
+  margin-block: -4px;
 }
 
 .chip {

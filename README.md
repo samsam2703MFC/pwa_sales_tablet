@@ -6,7 +6,7 @@ Application tablette (PWA) pour les vendeuses des boutiques L'Atelier By : tout 
 - **Formation** : onboarding vente en 7 modules (version courte ≤ 1 min et version complète).
 - Bascule FR/NL instantanée, recherche globale (produits, ingrédients, allergènes, FAQ), fiche produit en panneau latéral (paysage) ou feuille montante (portrait).
 
-Reconstruit au pixel près à partir du prototype HTML du handoff design (`Book Vendeuses.dc.html`).
+Reconstruit au pixel près à partir du prototype HTML du handoff design (`Book Vendeuses.dc.html`). Les écarts entre le README du handoff et le prototype, et les quelques écarts volontaires, sont listés dans [docs/ecarts-prototype.md](docs/ecarts-prototype.md).
 
 ## Démarrer
 
@@ -25,6 +25,10 @@ npm run lint       # oxlint
 npm test           # tests unitaires (Vitest)
 npm run test:e2e   # tests de bout en bout (Playwright)
 ```
+
+`npm run test:e2e` construit l'application puis la sert avec `vite preview` sur le port 4173 (échoue tout de suite si le port est déjà pris, par exemple par `npm run preview`). `E2E_SKIP_BUILD=1 npm run test:e2e` réutilise le `dist/` existant. Les tests tournent en paysage (1280×800) et en portrait (820×1180), y compris le fonctionnement hors connexion.
+
+Les icônes de l'application (`public/icons/`, `public/favicon.ico`) sont générées par `npm run icons`.
 
 ## Configuration
 
@@ -60,6 +64,8 @@ public/img/      illustrations au trait (design system L'Atelier By)
 ## Données
 
 Les données de `src/data/book.ts` sont des **exemples** à remplacer par les fiches produit officielles (produits, prix, allergènes, FAQ) et par un export caisse (statistiques). Tous les textes sont des paires `[FR, NL]` ; le modèle est typé dans `src/data/types.ts`.
+
+Les illustrations sont dans `public/img/` (PNG transparents au trait, environ 560 px, affichés en `mix-blend-mode: multiply`). Seules les illustrations utilisées par l'application y sont copiées ; les autres restent dans le handoff design.
 
 ## Hors connexion
 
