@@ -1,0 +1,39 @@
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+
+.logo {
+  height: 22px;
+  width: auto;
+}
+
+.book {
+  font-family: var(--font-accent);
+  font-weight: 300;
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+/* Data source (not in the prototype): a small muted badge that never pushes the FR/NL toggle away. */
+.source {
+  align-self: center;
+  font-size: 12px;
+  padding: 2px 10px;
+  border: 0.5px solid var(--color-border-secondary);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}

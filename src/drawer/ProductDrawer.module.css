@@ -1,0 +1,471 @@
+/* Product sheet — right side panel (landscape) or bottom sheet (portrait). */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--color-scrim);
+  animation: global(fadeIn) 200ms ease;
+}
+
+.panel {
+  position: relative;
+  width: min(640px, 100%);
+  height: 100%;
+  border-radius: 0;
+  animation: global(sheetIn) 260ms var(--ease-sheet);
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+  /* Keyboard scroll-into-view keeps the focus ring of the last pill visible. */
+  scroll-padding-bottom: 8px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-drawer);
+  display: flex;
+  flex-direction: column;
+}
+/* Focus target on open (keyboard scrolling, screen readers); the buttons carry the visible ring. */
+.panel:focus {
+  outline: none;
+}
+
+.compact .panel {
+  width: 100%;
+  height: 94vh;
+  height: 94dvh; /* visible height when a mobile browser toolbar is showing (vh = toolbar hidden) */
+  border-radius: 20px 20px 0 0;
+  animation: global(sheetUp) 280ms var(--ease-sheet);
+}
+
+/* --- Sticky header --------------------------------------------------------- */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+}
+
+.handleRow {
+  display: flex;
+  justify-content: center;
+  padding-top: 10px;
+}
+
+.handle {
+  width: 44px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--color-border-secondary);
+  display: block;
+}
+
+.bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px 12px;
+}
+
+.lead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.back,
+.close {
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  cursor: pointer;
+  color: var(--color-text);
+}
+
+.back {
+  border: none;
+  background: var(--color-background-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 260px;
+}
+
+.close {
+  border: 0.5px solid var(--color-border-secondary);
+  background: transparent;
+}
+
+.cat {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* --- Body -------------------------------------------------------------------- */
+.body {
+  padding: 24px 32px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+.compact .body {
+  padding: 20px 20px 40px;
+}
+
+/* Section eyebrow (h3, styled as the prototype's label). */
+.eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+}
+
+.tile {
+  width: 150px;
+  height: 150px;
+  border-radius: var(--radius-lg);
+  background: var(--color-background-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tileImg {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.name {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1.15;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.price {
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--color-primary);
+}
+
+.unit {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-text-muted);
+}
+
+.badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+}
+
+.avail {
+  background: var(--color-secondary);
+  color: var(--color-on-abricot);
+}
+
+.vegan {
+  padding: 3px 10px;
+  border: 1px solid var(--color-text);
+}
+
+.vege {
+  padding: 3px 10px;
+  border: 0.5px solid var(--color-border-secondary);
+  color: var(--color-text-muted);
+}
+
+.best {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* "À dire au client" */
+.say {
+  padding: 18px 20px;
+  border-radius: var(--radius-lg);
+  background: var(--color-secondary);
+  color: var(--color-on-abricot);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sayLabel {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.pitch {
+  font-style: italic;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.desc {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+/* --- Allergens -------------------------------------------------------------- */
+.allergens {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.alHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.legend {
+  display: flex;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  display: block;
+}
+
+.ring {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-collection-border);
+  display: block;
+}
+
+.alGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.al {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+}
+
+.contains {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 500;
+}
+
+.traces {
+  border: 1px dashed var(--color-collection-border);
+  color: var(--color-collection-icon);
+}
+
+.absent {
+  background: var(--color-background-secondary);
+  color: var(--color-absent-text);
+}
+
+/* Unverified allergen list (BO data): a notice instead of the 14 tiles. */
+.alCheck {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-collection-border);
+  color: var(--color-collection-icon);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.alCheckTitle {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.alRaw {
+  color: var(--color-text);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Traces never entered (verified allergens). */
+.trUnk {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-collection-icon);
+}
+
+/* --- Ingredients, shelf life ------------------------------------------------ */
+.ingredients {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ingr {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.keepBlock {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 0.5px solid var(--color-border-tertiary);
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+}
+
+.keepCol {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dlc {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--color-primary);
+}
+
+.keep {
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+/* --- "Ce que les clients demandent" ----------------------------------------- */
+.faqList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.faq {
+  border-radius: var(--radius-md);
+  background: var(--color-background-secondary);
+  overflow: hidden;
+}
+
+.faqBtn {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+}
+/* The card clips its content: draw the focus ring inside. */
+.faqBtn:focus-visible {
+  outline-offset: -2px;
+}
+
+.sign {
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--color-primary);
+}
+
+.answer {
+  padding: 0 16px 14px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* --- "Proposez aussi" ------------------------------------------------------- */
+.also {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.crossLine {
+  font-style: italic;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.7;
+}

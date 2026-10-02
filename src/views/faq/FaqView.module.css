@@ -1,0 +1,84 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 820px;
+}
+
+.item {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+/* Semantic wrapper only: the button is block-level, so the heading adds no box of its own. */
+.heading {
+  margin: 0;
+  font: inherit;
+}
+
+/* Question row: 56 px min, question 17 px 500 (UA line-height, as in the prototype). */
+.head {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  margin: 0;
+  padding: 12px 20px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-family: var(--font-ui);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+/* The card clips overflow: draw the keyboard focus ring inside the button. */
+.head:focus-visible {
+  outline-offset: -2px;
+}
+
+.sign {
+  font-size: 24px;
+  font-weight: 300;
+  color: var(--color-primary);
+}
+
+.answer {
+  padding: 0 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.answer[hidden] {
+  display: none;
+}
+
+.text {
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.linked {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}

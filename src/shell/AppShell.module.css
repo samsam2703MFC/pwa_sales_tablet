@@ -1,0 +1,48 @@
+.app {
+  display: grid;
+  grid-template-columns: 256px minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--color-bg);
+  font-family: var(--font-ui);
+  color: var(--color-text);
+}
+
+.main {
+  min-width: 0;
+  padding: 0 36px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* Portrait: no sidebar, room at the bottom for the tab bar. */
+.compact {
+  grid-template-columns: minmax(0, 1fr);
+}
+.compact .main {
+  padding: 0 20px 120px;
+}
+
+/* Sticky header block: compact top bar (portrait) + search row. */
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--color-bg);
+  padding: 16px 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Keyboard focus and scrollIntoView clear the sticky header (76 px landscape / 136 px portrait)
+   and the fixed portrait tab bar (69 px + safe area), plus 4 px for the focus ring, so a focused
+   element is never left hidden under them (WCAG 2.2 SC 2.4.11). No visual change at rest.
+   `.compact` always sits on the same element as `.app` and comes later, so it wins. */
+:global(html):has(.app) {
+  scroll-padding-top: 80px;
+}
+:global(html):has(.compact) {
+  scroll-padding-top: 140px;
+  scroll-padding-bottom: calc(73px + env(safe-area-inset-bottom));
+}

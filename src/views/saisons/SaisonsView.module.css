@@ -1,0 +1,149 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* --- Calendar ------------------------------------------------------------ */
+.calCard {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  overflow-x: auto;
+}
+
+.cal {
+  display: grid;
+  grid-template-columns: 170px repeat(12, minmax(36px, 1fr));
+  min-width: 640px;
+}
+
+/* Rows are only semantic: their cells sit directly in the grid. */
+.row {
+  display: contents;
+}
+
+/* keeps its sr-only label inside the scrolling card */
+.corner {
+  position: relative;
+}
+
+.month {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: center;
+  padding: 6px 0 10px;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  border-radius: 6px 6px 0 0;
+}
+
+.monthNow {
+  color: var(--color-primary);
+  font-weight: 700;
+  background: var(--color-row-now);
+}
+
+.name {
+  font-size: 15px;
+  padding: 9px 8px 9px 0;
+  border-top: 0.5px solid var(--color-border-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cell {
+  border-top: 0.5px solid var(--color-border-tertiary);
+  display: flex;
+  align-items: center;
+  padding: 0 1px;
+}
+
+.cellNow {
+  background: var(--color-row-now);
+}
+
+.bar {
+  /* keeps the sr-only month label inside the scrolling card (no page overflow) */
+  position: relative;
+  height: 12px;
+  width: 100%;
+  border-radius: 3px;
+  background: var(--color-primary);
+}
+
+/* --- Season cards -------------------------------------------------------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cardImg {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.cardText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.titleRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Card title: the prototype's H3, Vank 21 — line-height inherited from body (1.6). */
+.cardTitle {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 21px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.now {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.dates {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.tip {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.tipL {
+  font-weight: 500;
+  color: var(--color-primary);
+}

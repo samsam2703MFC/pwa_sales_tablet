@@ -1,0 +1,92 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  align-items: flex-end;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--color-scrim);
+  animation: global(fadeIn) 200ms ease;
+}
+
+.sheet {
+  position: relative;
+  width: 100%;
+  background: var(--color-surface);
+  border-radius: 20px 20px 0 0;
+  padding: 10px 20px calc(96px + env(safe-area-inset-bottom));
+  animation: global(sheetUp) 260ms var(--ease-sheet);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+/* Focus target for keyboard / screen-reader users; the tiles carry the visible focus ring. */
+.sheet:focus {
+  outline: none;
+}
+
+.handleRow {
+  display: flex;
+  justify-content: center;
+}
+
+.handle {
+  width: 44px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--color-border-secondary);
+  display: block;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.groupTitle {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-text-muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 10px;
+  min-height: 120px;
+  border-radius: var(--radius-lg);
+  border: none;
+  background: var(--color-background-secondary);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  transition: transform 120ms ease;
+}
+.tile:active { transform: scale(var(--press-scale)); }
+
+.img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.label {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text);
+}

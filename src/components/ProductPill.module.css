@@ -1,0 +1,59 @@
+.row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.pill {
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-pill);
+  border: 0.5px solid var(--color-border-secondary);
+  background: var(--color-background-secondary);
+  cursor: pointer;
+  font-family: var(--font-ui);
+}
+@media (hover: hover) {
+  .hover:hover { border-color: var(--color-primary); }
+}
+
+.img {
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.name {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.price {
+  color: var(--color-primary);
+}
+
+/* 52 px · image 40 · text 16 */
+.lg {
+  gap: 10px;
+  padding: 6px 16px 6px 6px;
+  min-height: 52px;
+}
+.lg .img { width: 40px; height: 40px; }
+.lg .name,
+.lg .price { font-size: 16px; }
+
+/* 52 px · image 34 · text 15 */
+.md {
+  gap: 8px;
+  padding: 4px 14px 4px 4px;
+  min-height: 52px;
+  font-size: 15px;
+}
+.md .img { width: 34px; height: 34px; }
+
+/* 44 px · image 34 · text 15 */
+.sm {
+  gap: 8px;
+  padding: 4px 14px 4px 4px;
+  min-height: 44px;
+  font-size: 15px;
+}
+.sm .img { width: 34px; height: 34px; }

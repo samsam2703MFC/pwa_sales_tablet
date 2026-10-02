@@ -1,0 +1,65 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Category title: Vank 21 px (line-height inherited from body, as in the prototype). */
+.title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 21px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.list {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 4px 20px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(140px, 240px) 110px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+}
+
+/* Product name: text button (UA line-height, as in the prototype). Its hit area spans the
+   row's 12 px padding (43 px+ tall) while the layout box stays at the text height. */
+.name {
+  margin: -12px 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 12px 0;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+}
+/* Keep the keyboard focus ring inside the row rather than over the separators. */
+.name:focus-visible {
+  outline-offset: -2px;
+}
+
+.dlc {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-primary);
+}
+
+.keep {
+  font-size: 15px;
+  line-height: 1.5;
+}
