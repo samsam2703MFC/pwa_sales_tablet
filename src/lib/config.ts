@@ -9,9 +9,9 @@ import type { Lang } from '../data/types';
  *   `VITE_SHOW_PRICES=false`, overridable at runtime with `?prices=0`.
  * - `?date=YYYY-MM-DD` pins "today" (season of the moment, calendar highlight,
  *   header date) — handy for demos and screenshots.
- * - `?shop=<id>` (digits, the BO's shop id) picks the shop whose book the BO sends. It is the
- *   only thing the app remembers on the device (localStorage `bv.shop`): the installed app
- *   opens its start URL without the query string. `?shop=` (empty) forgets it.
+ * - `?shop=<id>` (digits, the BO's shop id) picks the shop whose book the BO sends. It is
+ *   remembered on the device (localStorage `bv.shop`): the installed app opens its start URL
+ *   without the query string. `?shop=` (empty) forgets it.
  */
 export interface AppConfig {
   defaultLang: Lang;
@@ -31,7 +31,7 @@ export type ShopStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 const SHOP_ID = /^\d{1,9}$/;
 
 /** fn(), or `fallback` when it throws (storage unavailable). */
-const safely = <T>(fn: () => T, fallback: T): T => {
+export const safely = <T>(fn: () => T, fallback: T): T => {
   try {
     return fn();
   } catch {
@@ -59,7 +59,7 @@ export function readShop(search: string, storage: ShopStorage | null): string | 
 }
 
 /** window.localStorage, or null where reading it throws (sandboxed frames, blocked storage). */
-const localStore = (): ShopStorage | null => safely(() => (typeof window === 'undefined' ? null : window.localStorage), null);
+export const localStore = (): ShopStorage | null => safely(() => (typeof window === 'undefined' ? null : window.localStorage), null);
 
 const parseBool = (v: string | null | undefined): boolean | null => {
   if (v == null || v === '') return null;

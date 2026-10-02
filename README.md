@@ -58,7 +58,7 @@ Les icônes de l'application (`public/icons/`, `public/favicon.ico`) sont géné
 | Magasin (book envoyé par le BO) | — | `?shop=4` (identifiant `shops.id` du BO) | book réseau |
 | Racine de l'API du BO | `VITE_API_BASE=https://…/api/cockpit` | — | `../api/cockpit` à côté du dossier de l'application |
 
-Le magasin est la **seule** valeur mémorisée sur l'appareil (localStorage `bv.shop`) : l'application installée s'ouvre sans paramètre, il faut donc qu'elle se souvienne du magasin de son lien `?shop=4`. `?shop=` (vide) l'oublie. Rien d'autre n'est gardé : chaque ouverture repart de l'accueil.
+Deux choses seulement sont mémorisées sur l'appareil (localStorage) : le magasin (`bv.shop`) — l'application installée s'ouvre sans paramètre, il faut donc qu'elle se souvienne du magasin de son lien `?shop=4` ; `?shop=` (vide) l'oublie — et le dernier book reçu du BO (`bv.book`, voir « Données »). Aucun état de navigation n'est gardé : chaque ouverture repart de l'accueil.
 
 ## Mise en page
 
@@ -83,14 +83,14 @@ public/img/      illustrations au trait (design system L'Atelier By)
 
 ## Données
 
-Au lancement, l'application demande son book au BO : `GET <API>/tablette/book?shop=<id>` (délai maximum 6 s), puis le contrôle (structure, schéma 1 ; les lignes invalides sont écartées) et le fusionne avec le book d'exemple (`src/data/remote.ts`) :
+Au lancement, l'application affiche tout de suite le dernier book reçu du BO pour ce lien, gardé sur l'appareil (localStorage `bv.book`, environ 100 Ko), puis redemande le book en arrière-plan : le BO met souvent 2 à 6 s à répondre. La toute première fois (rien de gardé), elle attend le BO jusqu'à 15 s (« Book vendeuses… » à l'écran) avant de démarrer sur les données d'exemple. Le book vient de `GET <API>/tablette/book?shop=<id>` ; l'application le contrôle (structure, schéma 1 ; les lignes invalides sont écartées) et le fusionne avec le book d'exemple (`src/data/remote.ts`) :
 
 - **du BO** : produits (noms, prix, unités, photos, best-sellers, régime, conservation, DLC), catégories et saisons ;
 - **de l'exemple** (`src/data/book.ts`) : les 14 allergènes réglementaires, la FAQ, les services, les bons réflexes, l'onboarding et les statistiques (bandeau « Données d'exemple ») ; les formules, les produits liés de la FAQ et les classements qui citent des produits d'exemple disparaissent.
 
 Les blocs vides (argumentaire, description, ingrédients, conservation, vente additionnelle, formules…) sont masqués, un texte NL vide est remplacé par le FR et un produit sans photo reçoit une illustration neutre. **Allergènes** : un produit dont le BO ne garantit pas la liste (`alKnown: false`, toujours le cas tant que le format des allergènes du BO n'est pas vérifié) n'est jamais affiché comme compatible ni « sans » : « À vérifier sur l'étiquette » dans le tableau, sur la carte et dans la fiche (avec le texte brut du BO) ; des traces non renseignées (`trKnown: false`) donnent au mieux « Traces ».
 
-L'origine des données est toujours affichée : note de la colonne (paysage) ou pastille de l'en-tête (portrait) — « BO · <magasin> · <date> », « Hors ligne · données du … » ou « Données d'exemple ». Si le BO ne répond pas (hors ligne, erreur, réponse autre que du JSON), l'application démarre sur le dernier book reçu s'il est gardé sur la tablette (« Hors ligne · données du … »), sinon sur les données d'exemple (c'est le cas sous `vite preview` et dans les tests de bout en bout, sans BO). Elle redemande le book au plus une fois par heure tant qu'elle est ouverte ; une nouvelle version s'applique en rechargeant la page quand la tablette n'est pas utilisée, jamais pendant une vente.
+L'origine des données est toujours affichée : note de la colonne (paysage) ou pastille de l'en-tête (portrait) — « BO · <magasin> · <date> », « Hors ligne · données du … » ou « Données d'exemple ». Si le BO ne répond pas (hors ligne, erreur, réponse autre que du JSON), l'application démarre sur le dernier book reçu s'il est gardé sur la tablette (« Hors ligne · données du … »), sinon sur les données d'exemple (c'est le cas sous `vite preview` et dans les tests de bout en bout, sans BO). Elle redemande le book juste après le démarrage puis au plus une fois par heure tant qu'elle est ouverte ; une nouvelle version est gardée sur l'appareil et s'applique en rechargeant la page quand la tablette n'est pas utilisée, jamais pendant une vente.
 
 Les données de `src/data/book.ts` sont des **exemples** à remplacer par les fiches produit officielles (produits, prix, allergènes, FAQ) et par un export caisse (statistiques). Tous les textes sont des paires `[FR, NL]` ; le modèle est typé dans `src/data/types.ts`.
 
@@ -102,4 +102,4 @@ Les illustrations sont dans `public/img/` (PNG transparents au trait, environ 56
 
 L'application est une PWA installable : le service worker (Workbox via `vite-plugin-pwa`) met en cache l'application, les polices et toutes les illustrations au premier chargement. Les mises à jour se téléchargent en arrière-plan (au lancement, puis au plus une fois par heure, l'application ouverte ou au réveil de la tablette) ; la page se recharge sur la nouvelle version dès que la tablette est verrouillée ou inutilisée depuis deux minutes (tout de suite si personne n'y a encore touché), jamais pendant une manipulation.
 
-Données du BO : le dernier book reçu est gardé (cache `bv-book`, le réseau d'abord, le cache si le BO ne répond pas en 4 s ou renvoie une erreur) et les photos des produits aussi (cache `bv-photos`, 600 photos, 60 jours) : celles affichées, et toutes les autres, téléchargées une à une en arrière-plan quand la tablette est en ligne et inactive. Tout cela suppose https (voir « Dans le back-office »).
+Données du BO : le dernier book reçu est gardé (cache `bv-book`, le réseau d'abord, le cache si le BO ne répond pas en 30 s ou renvoie une erreur) et les photos des produits aussi (cache `bv-photos`, 600 photos, 60 jours) : celles affichées, et toutes les autres, téléchargées une à une en arrière-plan quand la tablette est en ligne et inactive. Tout cela suppose https (voir « Dans le back-office »).

@@ -5,8 +5,9 @@ import type { Labels, View } from '../lib/i18n';
 
 /**
  * Global UI state — mirrors the prototype's single component state.
- * None of it is persisted, on purpose: every launch starts from the home page. The only value
- * the app keeps on the device is the shop id (`?shop=`, localStorage `bv.shop`, src/lib/config.ts).
+ * None of it is persisted, on purpose: every launch starts from the home page. The app keeps
+ * only its data on the device: the shop id (`?shop=`, localStorage `bv.shop`, src/lib/config.ts)
+ * and the last BO book received (localStorage `bv.book`, src/data/remote.ts).
  */
 export interface AppState {
   view: View;

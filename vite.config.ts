@@ -80,14 +80,15 @@ export default defineConfig({
         // The matchers and the plugin are copied into sw.js as source: no outside variables.
         runtimeCaching: [
           {
-            // The book: always the BO's latest when it answers within 4 s, else the last one
+            // The book: the BO's latest when it answers (it commonly takes 2–6 s, so the wait is
+            // long: the app has its own copy on the device meanwhile), else the last one
             // received (offline, BO down or answering an error). Responses from the cache get an
             // `x-bv-cache: 1` header, so the app shows "Hors ligne · données du …".
             urlPattern: ({ url }) => url.pathname.endsWith('/tablette/book'),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'bv-book',
-              networkTimeoutSeconds: 4,
+              networkTimeoutSeconds: 30,
               expiration: { maxEntries: 5 },
               cacheableResponse: { statuses: [200] },
               plugins: [

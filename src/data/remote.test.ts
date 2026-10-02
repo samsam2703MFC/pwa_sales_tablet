@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { FIXTURE_BOOK as F } from '../test/fixtures';
 import { REMOTE_PAYLOAD } from '../test/remoteFixture';
 import { SAMPLE_BOOK, SAMPLE_SOURCE } from './book';
-import { bookChanged, bookUrl, CACHE_HEADER, fetchBook, loadBook, mergeBook, parsePayload, remoteImg, remotePhotos } from './remote';
+import { BOOK_STORE_KEY, bookUrl, CACHE_HEADER, fetchBook, mergeBook, parsePayload, readStoredBook, refreshBook, remoteImg, remotePhotos, startBook, storeBook, type BookStorage } from './remote';
 import { validateBook } from './validate';
 
 const PUB = 'http://bo.test/consulant_bo/';
@@ -179,19 +179,70 @@ describe('mergeBook', () => {
   });
 });
 
-describe('fetchBook / loadBook', () => {
-  it('loads the BO book: merged into the sample, source "bo"', async () => {
+/** An in-memory localStorage; `failing` makes every call throw (quota, blocked storage). */
+const memoryStorage = (failing = false) => {
+  const m = new Map<string, string>();
+  const s: BookStorage & { map: Map<string, string> } = {
+    map: m,
+    getItem: k => { if (failing) throw new Error('blocked'); return m.get(k) ?? null; },
+    setItem: (k, v) => { if (failing) throw new Error('quota'); m.set(k, v); },
+  };
+  return s;
+};
+
+describe('startBook', () => {
+  it('without a kept book: loads the BO book, merged into the sample, source "bo", and keeps it on the device', async () => {
     const fetch = answer(payload());
-    const r = await loadBook({ url: URL_, sample: SAMPLE_BOOK, publicRoot: PUB, fetch });
+    const storage = memoryStorage();
+    const r = await startBook({ url: URL_, sample: SAMPLE_BOOK, publicRoot: PUB, fetch, storage });
     expect(fetch).toHaveBeenCalledWith(URL_, expect.objectContaining({ headers: { Accept: 'application/json' } }));
     expect(r.source).toEqual({ kind: 'bo', version: '3f2a9c0d1e', generatedAt: '2026-10-02T09:12:00+02:00', shop: { id: '4', name: 'Ixelles' } });
     expect(r.book.products[0].name[0]).toBe('Croissant au beurre AOP');
+    expect(r.refresh).toBe(false);
+    expect(readStoredBook(URL_, storage)?.version).toBe('3f2a9c0d1e');
   });
 
-  it('a book the service worker served from its cache, or received offline, is offline data', async () => {
-    const cached = await loadBook({ url: URL_, sample: SAMPLE_BOOK, publicRoot: PUB, fetch: answer(payload(), { headers: { 'content-type': 'application/json', [CACHE_HEADER]: '1' } }) });
+  it('with a kept book for this URL: starts at once without asking the BO, then asks for a refresh', async () => {
+    const storage = memoryStorage();
+    storeBook(URL_, payload(), storage);
+    const fetch = vi.fn();
+    const r = await startBook({ url: URL_, sample: SAMPLE_BOOK, publicRoot: PUB, fetch, storage });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(r.source.kind).toBe('bo');
+    expect(r.source.version).toBe('3f2a9c0d1e');
+    expect(r.book.products[0].name[0]).toBe('Croissant au beurre AOP');
+    expect(r.refresh).toBe(true);
+    // offline: the kept book is offline data, and there is nothing to refresh from
+    const offline = await startBook({ url: URL_, sample: SAMPLE_BOOK, publicRoot: PUB, fetch, storage, online: false });
+    expect(offline.source.kind).toBe('cache');
+    expect(offline.refresh).toBe(false);
+  });
+
+  it('ignores a book kept for another shop, or an unusable one', async () => {
+    const storage = memoryStorage();
+    storeBook(URL_.replace('shop=4', 'shop=5'), payload(), storage);
+    expect(readStoredBook(URL_, storage)).toBeNull();
+    storage.map.set(BOOK_STORE_KEY, '{not json');
+    expect(readStoredBook(URL_, storage)).toBeNull();
+    storage.map.set(BOOK_STORE_KEY, JSON.stringify({ url: URL_, payload: payload(p => { p.schema = 2; }) }));
+    expect(readStoredBook(URL_, storage)).toBeNull();
+    const r = await startBook({ url: URL_, sample: SAMPLE_BOOK, publicRoot: PUB, fetch: answer(payload()), storage });
+    expect(r.source.kind).toBe('bo');
+  });
+
+  it('storage errors never stop the app: it simply waits for the BO', async () => {
+    const r = await startBook({ url: URL_, sample: SAMPLE_BOOK, publicRoot: PUB, fetch: answer(payload()), storage: memoryStorage(true) });
+    expect(r.source.kind).toBe('bo');
+    expect(readStoredBook(URL_, null)).toBeNull();
+  });
+
+  it('a book the service worker served from its cache, or received offline, is offline data (not kept)', async () => {
+    const storage = memoryStorage();
+    const cached = await startBook({ url: URL_, sample: SAMPLE_BOOK, publicRoot: PUB, storage, fetch: answer(payload(), { headers: { 'content-type': 'application/json', [CACHE_HEADER]: '1' } }) });
     expect(cached.source.kind).toBe('cache');
-    const offline = await loadBook({ url: URL_, sample: SAMPLE_BOOK, publicRoot: PUB, fetch: answer(payload()), online: false });
+    expect(cached.refresh).toBe(true);
+    expect(readStoredBook(URL_, storage)).toBeNull();
+    const offline = await startBook({ url: URL_, sample: SAMPLE_BOOK, publicRoot: PUB, fetch: answer(payload()), online: false });
     expect(offline.source.kind).toBe('cache');
   });
 
@@ -202,13 +253,14 @@ describe('fetchBook / loadBook', () => {
     ['invalid JSON', answer('{"schema":1,', { headers: { 'content-type': 'application/json' } })],
     ['a network error', vi.fn(async () => { throw new TypeError('Failed to fetch'); })],
     ['another schema', answer(payload(p => { p.schema = 2; }))],
-  ])('falls back to the sample on %s', async (_, fetch) => {
-    const r = await loadBook({ url: URL_, sample: SAMPLE_BOOK, publicRoot: PUB, fetch: fetch as unknown as typeof globalThis.fetch });
+  ])('falls back to the sample on %s, and asks for a refresh', async (_, fetch) => {
+    const r = await startBook({ url: URL_, sample: SAMPLE_BOOK, publicRoot: PUB, fetch: fetch as unknown as typeof globalThis.fetch });
     expect(r.book).toBe(SAMPLE_BOOK);
     expect(r.source).toBe(SAMPLE_SOURCE);
+    expect(r.refresh).toBe(true);
   });
 
-  it('gives up after the timeout', async () => {
+  it('fetchBook gives up after the timeout', async () => {
     vi.useFakeTimers();
     try {
       const fetch = vi.fn((_url: string, init?: RequestInit) => new Promise<Response>((_, reject) => {
@@ -225,14 +277,18 @@ describe('fetchBook / loadBook', () => {
   });
 });
 
-describe('bookChanged', () => {
-  it('true only for a fresh BO answer with another version', async () => {
-    expect(await bookChanged(URL_, '3f2a9c0d1e', { fetch: answer(payload()) })).toBe(false);
-    expect(await bookChanged(URL_, 'old', { fetch: answer(payload()) })).toBe(true);
+describe('refreshBook', () => {
+  it('true only for a fresh BO answer with another version, which it keeps on the device', async () => {
+    const storage = memoryStorage();
+    expect(await refreshBook(URL_, '3f2a9c0d1e', storage, { fetch: answer(payload()) })).toBe(false);
+    expect(await refreshBook(URL_, 'old', storage, { fetch: answer(payload()) })).toBe(true);
+    expect(readStoredBook(URL_, storage)?.version).toBe('3f2a9c0d1e');
     // the sample was on screen: the BO came back
-    expect(await bookChanged(URL_, null, { fetch: answer(payload()) })).toBe(true);
-    // the cached copy (BO unreachable) or a failure is "no change"
-    expect(await bookChanged(URL_, 'old', { fetch: answer(payload(), { headers: { 'content-type': 'application/json', [CACHE_HEADER]: '1' } }) })).toBe(false);
-    expect(await bookChanged(URL_, 'old', { fetch: answer('nope', { status: 503 }) })).toBe(false);
+    expect(await refreshBook(URL_, null, storage, { fetch: answer(payload()) })).toBe(true);
+    // the cached copy (BO unreachable) or a failure is "no change", and nothing is kept
+    const other = memoryStorage();
+    expect(await refreshBook(URL_, 'old', other, { fetch: answer(payload(), { headers: { 'content-type': 'application/json', [CACHE_HEADER]: '1' } }) })).toBe(false);
+    expect(await refreshBook(URL_, 'old', other, { fetch: answer('nope', { status: 503 }) })).toBe(false);
+    expect(readStoredBook(URL_, other)).toBeNull();
   });
 });

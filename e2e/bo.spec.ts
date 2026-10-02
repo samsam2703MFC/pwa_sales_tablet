@@ -156,7 +156,7 @@ test.describe('data from the back-office', () => {
     await page.clock.fastForward('01:00:00');
     await expect.poll(() => served).toBe(2);
     // Let the app read the answer (real time) before moving the fake clock on: jumping ahead
-    // now would fire the request's 6 s timeout first.
+    // now would fire the request's timeout first.
     await page.waitForTimeout(500);
     // Someone is using the tablet: nothing moves under their fingers.
     await expect(sheet).toBeVisible();
@@ -196,10 +196,14 @@ test.describe('data from the back-office, offline', () => {
       '/consulant_bo/uploads/plano/panel/1610042.png', '/consulant_bo/uploads/tablette/1610006-640.jpg', '/consulant_bo/uploads/tablette/3300120-640.jpg',
     ]);
 
-    // The BO goes away (connections dropped): the worker answers with the last book, marked.
+    // The book is also kept on the device (localStorage), for this link.
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('bv.book') ?? '{}').url)).toBe(bo.base.replace(/tablette\/$/, 'api/cockpit/tablette/book?shop=4'));
+
+    // The BO goes away (connections dropped): the app starts at once on the book kept on the
+    // device, still labelled with the BO and its date; the background refresh fails quietly.
     bo.up = false;
     await page.reload();
-    await expect(source(page)).toHaveText(/^Hors ligne · données du /);
+    await expect(source(page)).toHaveText(/^BO · Ixelles · 2 oct\.? 09[:h]12$/);
     await expect(page.getByRole('main').getByRole('button', { name: /Croissant au beurre AOP/ })).toBeVisible();
 
     // The tablet goes offline too.
