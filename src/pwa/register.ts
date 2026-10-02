@@ -9,8 +9,9 @@ import { registerSW } from 'virtual:pwa-register';
  * the page reloads onto it at once if nobody has touched it since it loaded, else as soon as
  * nobody is using the tablet (see `reloadWhenIdle`): never in the middle of a sale.
  *
- * No-op without service worker support (Vitest/jsdom, old WebViews); under `vite` dev the
- * plugin serves a stub module, so nothing is registered either.
+ * No-op without service worker support (Vitest/jsdom, old WebViews, and any page served over
+ * plain http: service workers only exist in secure contexts — the app then works online only);
+ * under `vite` dev the plugin serves a stub module, so nothing is registered either.
  */
 export function registerServiceWorker(
   nav: Navigator | undefined = globalThis.navigator,
@@ -57,10 +58,12 @@ export interface WatchOptions {
  * Check at most once an hour: while the page stays visible (polled), and when it becomes
  * visible again (tablet unlocked, app brought back). Skipped while hidden or offline;
  * update errors are ignored — the next poll retries.
+ * Also drives the hourly check for a new BO book (src/main.tsx): `registration` is then any
+ * object whose `update()` runs the check.
  * Returns a disposer that stops the polling and the listener.
  */
 export function watchForUpdates(
-  registration: Pick<ServiceWorkerRegistration, 'update'>,
+  registration: { update(): Promise<unknown> },
   {
     doc = document,
     nav = globalThis.navigator,

@@ -1,6 +1,6 @@
 import { BOOK } from '../../data/book';
 import type { Allergen, Lang, Product } from '../../data/types';
-import { tr } from '../../lib/catalog';
+import { allergensUnknown, tr } from '../../lib/catalog';
 
 /**
  * Allergen matrix view model — the prototype's alChips / alHdr / alRows / okCount / warnCount.
@@ -29,6 +29,8 @@ export interface AlCellVM {
   id: string;
   contains: boolean;
   traces: boolean;
+  /** Unverified allergen list and neither "contains" nor "traces": "?" (never shown as absent). */
+  unknown: boolean;
   /** Column of a checked allergen. */
   on: boolean;
 }
@@ -42,6 +44,11 @@ export interface AlRowVM {
   warn: boolean;
   /** "OK" pill: a selection exists and the product neither contains nor may contain it. */
   ok: boolean;
+  /**
+   * "À vérifier" pill: the product's allergen list is unverified (BO data) and it is not known to
+   * contain an excluded allergen — with or without a selection. Never OK.
+   */
+  unknown: boolean;
   cells: AlCellVM[];
 }
 
@@ -54,16 +61,25 @@ export interface AlMatrixVM {
   okCount: number;
   /** Products marked "Traces". */
   warnCount: number;
+  /** Products marked "À vérifier" (0 with the sample data). */
+  unknownCount: number;
 }
 
-export type AlStatus = Pick<AlRowVM, 'bad' | 'warn' | 'ok'>;
+export type AlStatus = Pick<AlRowVM, 'bad' | 'warn' | 'ok' | 'unknown'>;
 
-/** Compatibility of a product with the excluded allergens (exactly the prototype's rules). */
-export function allergenStatus(p: Pick<Product, 'al' | 'tr'>, ex: readonly string[]): AlStatus {
+/**
+ * Compatibility of a product with the excluded allergens: the prototype's rules for verified
+ * data (the sample), made safe for unverified BO data. A product whose allergen list is not
+ * verified (`alKnown === false`) is never OK: "à vérifier", unless it is known to contain an
+ * excluded allergen (bad). One whose traces were never entered (`trKnown === false`) is at
+ * most "traces".
+ */
+export function allergenStatus(p: Pick<Product, 'al' | 'tr' | 'alKnown' | 'trKnown'>, ex: readonly string[]): AlStatus {
   const bad = ex.some(e => p.al.includes(e));
-  const warn = !bad && ex.some(e => p.tr.includes(e));
-  const ok = ex.length > 0 && !bad && !warn;
-  return { bad, warn, ok };
+  const unknown = !bad && allergensUnknown(p);
+  const warn = !bad && !unknown && ex.length > 0 && (p.trKnown === false || ex.some(e => p.tr.includes(e)));
+  const ok = ex.length > 0 && !bad && !warn && !unknown;
+  return { bad, warn, ok, unknown };
 }
 
 /** Builds the whole view model. Products and allergens keep the data order. */
@@ -78,20 +94,24 @@ export function allergenMatrix(
   const headers = allergens.map(a => ({ id: a.id, code: a.s, name: tr(a.n, lang), on: isOn(a) }));
   let okCount = 0;
   let warnCount = 0;
+  let unknownCount = 0;
   const rows = products.map(p => {
     const st = allergenStatus(p, ex);
     if (st.ok) okCount++;
     if (st.warn) warnCount++;
+    if (st.unknown) unknownCount++;
+    const unverified = allergensUnknown(p);
     return {
       id: p.id,
       name: tr(p.name, lang),
       ...st,
-      cells: allergens.map(a => ({
-        id: a.id, contains: p.al.includes(a.id), traces: p.tr.includes(a.id), on: isOn(a),
-      })),
+      cells: allergens.map(a => {
+        const contains = p.al.includes(a.id), traces = p.tr.includes(a.id);
+        return { id: a.id, contains, traces, unknown: unverified && !contains && !traces, on: isOn(a) };
+      }),
     };
   });
-  return { hasEx: ex.length > 0, chips, headers, rows, okCount, warnCount };
+  return { hasEx: ex.length > 0, chips, headers, rows, okCount, warnCount, unknownCount };
 }
 
 /** Screen-reader only labels (not shown in the prototype). */

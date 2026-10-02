@@ -12,6 +12,7 @@ import s from './HomeView.module.css';
 /**
  * Accueil: greeting, "Le client demande…" shortcuts (each opens a pre-filtered section),
  * onboarding banner, season(s) of the moment, next season to prepare, best sellers.
+ * Blocks with nothing to show (no season, no best seller, empty instruction) are left out.
  */
 export function HomeView() {
   const { L, lang, actions } = useApp();
@@ -51,26 +52,30 @@ export function HomeView() {
 
       {m.now.map(x => <SeasonNow key={x.id} season={x} />)}
 
-      <div className={s.next}>
-        <img src={m.next.img} alt="" className={s.nextImg} />
-        <div className={s.nextText}>
-          <span className={s.nextEyebrow}>{L.next} · {m.next.name} · {m.next.dates}</span>
-          <span className={s.nextTip}>{m.next.tip}</span>
+      {m.next && (
+        <div className={s.next}>
+          <img src={m.next.img} alt="" className={s.nextImg} />
+          <div className={s.nextText}>
+            <span className={s.nextEyebrow}>{L.next} · {m.next.name}{m.next.dates && <> · {m.next.dates}</>}</span>
+            {m.next.tip && <span className={s.nextTip}>{m.next.tip}</span>}
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className={s.best}>
-        <SectionTitle>{L.best}</SectionTitle>
-        <div className={s.bestGrid}>
-          {m.best.map(p => (
-            <button key={p.id} type="button" className={s.bestTile} onClick={() => actions.openProduct(p.id)}>
-              <img src={p.img} alt="" loading="lazy" decoding="async" className={s.bestImg} />
-              <span className={s.bestName}>{p.name}</span>
-              <span className={s.bestPrice}>{p.price}</span>
-            </button>
-          ))}
+      {m.best.length > 0 && (
+        <div className={s.best}>
+          <SectionTitle>{L.best}</SectionTitle>
+          <div className={s.bestGrid}>
+            {m.best.map(p => (
+              <button key={p.id} type="button" className={s.bestTile} onClick={() => actions.openProduct(p.id)}>
+                <img src={p.img} alt="" loading="lazy" decoding="async" className={s.bestImg} />
+                <span className={s.bestName}>{p.name}</span>
+                <span className={s.bestPrice}>{p.price}</span>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }
@@ -88,13 +93,17 @@ function SeasonNow({ season: x }: { season: SeasonVM }) {
           <span className={s.dates}>{x.dates}</span>
         </div>
         <h2 id={titleId} className={s.h2}>{x.name}</h2>
-        <div className={s.tip}>
-          <span className={s.tipLabel}>{L.tipL}</span>
-          <span>{x.tip}</span>
-        </div>
-        <PillRow>
-          {x.products.map(p => <ProductPill key={p.id} p={p} size="lg" />)}
-        </PillRow>
+        {x.tip && (
+          <div className={s.tip}>
+            <span className={s.tipLabel}>{L.tipL}</span>
+            <span>{x.tip}</span>
+          </div>
+        )}
+        {x.products.length > 0 && (
+          <PillRow>
+            {x.products.map(p => <ProductPill key={p.id} p={p} size="lg" />)}
+          </PillRow>
+        )}
       </div>
     </article>
   );

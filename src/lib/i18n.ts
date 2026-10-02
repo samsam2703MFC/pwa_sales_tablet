@@ -15,6 +15,11 @@ const LABELS = [
     faqTitle: 'Questions fréquentes', selFaqT: 'Ce que les clients demandent', linkedP: 'Produits concernés', svcTitle: 'Services', how: 'Comment ça marche', delay: 'Délai', consTitle: 'Conservation & DLC',
     asks: 'Le client demande…', results: 'Résultats pour', noRes: 'Aucun résultat.', questions: 'Questions',
     d0: 'Immédiat', d1: 'Jour même', dn: 'jours',
+    // Unverified BO data (not in the prototype)
+    alUnk: 'À vérifier', alCheck: "À vérifier sur l'étiquette", alUnkN: "à vérifier sur l'étiquette",
+    alUnkText: "Les allergènes de ce produit ne sont pas encore vérifiés : ne jamais garantir qu'il est « sans ». En cas de doute, appeler la responsable.",
+    alRawL: 'Mention de la fiche :', trUnk: "Traces non renseignées : à vérifier sur l'étiquette.",
+    srcSample: "Données d'exemple", srcOffline: 'Hors ligne', srcOfflineOf: 'données du', srcNetwork: 'réseau',
   },
   {
     book: 'Verkoopsboek', search: 'Zoek een product, ingrediënt, vraag…', clear: 'Wissen',
@@ -29,6 +34,10 @@ const LABELS = [
     faqTitle: 'Veelgestelde vragen', selFaqT: 'Wat klanten vragen', linkedP: 'Betrokken producten', svcTitle: 'Diensten', how: 'Hoe werkt het', delay: 'Termijn', consTitle: 'Bewaring & houdbaarheid',
     asks: 'De klant vraagt…', results: 'Resultaten voor', noRes: 'Geen resultaten.', questions: 'Vragen',
     d0: 'Onmiddellijk', d1: 'Dezelfde dag', dn: 'dagen',
+    alUnk: 'Nakijken', alCheck: 'Te controleren op het etiket', alUnkN: 'te controleren op het etiket',
+    alUnkText: 'De allergenen van dit product zijn nog niet nagekeken: nooit garanderen dat het "vrij van" is. Bij twijfel de verantwoordelijke bellen.',
+    alRawL: 'Vermelding op de fiche:', trUnk: 'Sporen niet ingevuld: te controleren op het etiket.',
+    srcSample: 'Voorbeeldgegevens', srcOffline: 'Offline', srcOfflineOf: 'gegevens van', srcNetwork: 'netwerk',
   },
 ] as const;
 
@@ -45,12 +54,14 @@ const STATS_LABELS = pair(
     per: [['day', "Aujourd'hui"], ['week', 'Cette semaine'], ['month', 'Ce mois']] as [Period, string][],
     rank: "Classement de l'équipe", top: 'Les plus vendus', days: '7 derniers jours', reached: 'Atteint', toGo: 'À atteindre', units: 'pcs', seller: 'Vendeuse',
     title: 'Statistiques', note: 'Chiffres d’exemple — à connecter à la caisse.',
+    sample: "Données d'exemple", sampleText: 'Vendeuses, chiffres et objectifs fictifs, en attendant la connexion à la caisse.',
   },
   {
     ca: 'Omzet', tk: 'Tickets', pan: 'Gemiddeld ticket', cross: 'Bijverkoop', sais: 'Seizoensproducten', obj: 'Doel', team: 'Team',
     per: [['day', 'Vandaag'], ['week', 'Deze week'], ['month', 'Deze maand']] as [Period, string][],
     rank: 'Teamoverzicht', top: 'Meest verkocht', days: '7 laatste dagen', reached: 'Gehaald', toGo: 'Nog te gaan', units: 'st.', seller: 'Verkoopster',
     title: 'Statistieken', note: 'Voorbeeldcijfers — te koppelen aan de kassa.',
+    sample: 'Voorbeeldgegevens', sampleText: 'Fictieve verkoopsters, cijfers en doelen, in afwachting van de koppeling met de kassa.',
   },
 );
 export type StatsLabels = (typeof STATS_LABELS)[0];

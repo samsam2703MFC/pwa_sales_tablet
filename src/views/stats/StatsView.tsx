@@ -3,7 +3,7 @@ import { Chip, ChipRow } from '../../components/Chip';
 import { PageTitle, SectionTitle } from '../../components/PageTitle';
 import { statsLabels } from '../../lib/i18n';
 import { useApp } from '../../state/store';
-import { statsA11y, statsView } from './stats.logic';
+import { STATS_ARE_SAMPLE, statsA11y, statsView } from './stats.logic';
 import s from './StatsView.module.css';
 
 const cx = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ');
@@ -12,7 +12,7 @@ const cx = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
  * Statistiques: period selector + seller chips, 4 KPI cards (objective progress),
  * 7-day revenue chart, top 5 products (open the product sheet) and the team
  * ranking table (tap a row to filter on that seller, tap again for the team).
- * Sample figures only — to be connected to the till.
+ * Sample figures only — to be connected to the till (banner "Données d'exemple").
  */
 export function StatsView() {
   const { state, lang, actions } = useApp();
@@ -44,6 +44,13 @@ export function StatsView() {
           ))}
         </div>
       </div>
+
+      {STATS_ARE_SAMPLE && (
+        <p className={s.sample}>
+          <span className={s.sampleTitle}>{LS.sample}</span>
+          <span>{LS.sampleText}</span>
+        </p>
+      )}
 
       <ChipRow label={a11y.sellers}>
         {vm.sellers.map(c => (
@@ -83,17 +90,20 @@ export function StatsView() {
             ))}
           </ul>
         </div>
-        <div className={cx(s.panel, s.topPanel)} role="group" aria-labelledby={topId}>
-          <span id={topId} className={cx(s.eyebrow, s.topTitle)}>{LS.top}</span>
-          {vm.top.map(t => (
-            <button key={t.product.id} type="button" className={s.topItem} onClick={() => actions.openProduct(t.product.id)}>
-              <span className={s.topRank}>{t.rank}</span>
-              <img src={t.product.img} alt="" loading="lazy" decoding="async" className={s.topImg} />
-              <span className={s.topName}>{t.product.name}</span>
-              <span className={s.topQty}>{t.qtyLabel}</span>
-            </button>
-          ))}
-        </div>
+        {/* Empty when the sample top lists name no product of the BO book. */}
+        {vm.top.length > 0 && (
+          <div className={cx(s.panel, s.topPanel)} role="group" aria-labelledby={topId}>
+            <span id={topId} className={cx(s.eyebrow, s.topTitle)}>{LS.top}</span>
+            {vm.top.map(t => (
+              <button key={t.product.id} type="button" className={s.topItem} onClick={() => actions.openProduct(t.product.id)}>
+                <span className={s.topRank}>{t.rank}</span>
+                <img src={t.product.img} alt="" loading="lazy" decoding="async" className={s.topImg} />
+                <span className={s.topName}>{t.product.name}</span>
+                <span className={s.topQty}>{t.qtyLabel}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className={s.rankBlock}>

@@ -10,6 +10,12 @@ import { dayNames, pair, statsLabels } from '../../lib/i18n';
  * `sel` = 'team' | seller id, `per` = 'day' | 'week' | 'month'.
  */
 
+/**
+ * The figures are the bundled sample (phase 1: the BO sends no statistics yet, even when the
+ * products come from it): the screen says so with a "Données d'exemple" banner.
+ */
+export const STATS_ARE_SAMPLE = true;
+
 /** The sellers the figures are computed on: the whole team, or the selected seller. */
 export const selectedSellers = (sel: string, stats: Stats = BOOK.stats): Seller[] =>
   sel === 'team' ? stats.sellers : stats.sellers.filter(x => x.id === sel);

@@ -51,11 +51,14 @@ export function AllergensView() {
           <div className={s.counts} aria-hidden="true">
             <span><b className={s.okN}>{m.okCount}</b> {L.alOk}</span>
             <span><b className={s.warnN}>{m.warnCount}</b> {L.alWarn}</span>
+            {m.unknownCount > 0 && <span><b className={s.unkN}>{m.unknownCount}</b> {L.alUnkN}</span>}
           </div>
         )}
         {/* Screen-reader copy of the counts: always rendered (out of the flow) so every change is announced. */}
         <p className="sr-only" role="status">
-          {m.hasEx ? `${m.okCount} ${L.alOk}, ${m.warnCount} ${L.alWarn}` : ''}
+          {m.hasEx
+            ? `${m.okCount} ${L.alOk}, ${m.warnCount} ${L.alWarn}` + (m.unknownCount > 0 ? `, ${m.unknownCount} ${L.alUnkN}` : '')
+            : ''}
         </p>
       </div>
 
@@ -84,6 +87,7 @@ export function AllergensView() {
                 <div className={cx(s.status, r.bad && s.dim)}>
                   {r.ok && <span className={s.okPill}>OK</span>}
                   {r.warn && <span className={s.warnPill}>{L.trS}</span>}
+                  {r.unknown && <span className={s.unkPill} title={L.alCheck}>{L.alUnk}</span>}
                   {r.bad && <span className="sr-only">{a11y.bad}</span>}
                 </div>
               </div>
@@ -96,6 +100,7 @@ export function AllergensView() {
                 <div key={c.id} role="cell" className={cx(s.cell, c.on && s.cellOn, r.bad && s.dim)}>
                   {c.contains && <span role="img" aria-label={L.contains} className={s.dot} />}
                   {c.traces && <span role="img" aria-label={L.traces} className={s.ring} />}
+                  {c.unknown && <span role="img" aria-label={L.alCheck} className={s.unk}>?</span>}
                 </div>
               ))}
             </div>
@@ -104,6 +109,9 @@ export function AllergensView() {
         <div className={s.legend}>
           <span className={s.legendItem}><span className={s.dot} aria-hidden="true" />{L.contains}</span>
           <span className={s.legendItem}><span className={s.ring} aria-hidden="true" />{L.traces}</span>
+          {m.unknownCount > 0 && (
+            <span className={s.legendItem}><span className={s.unk} aria-hidden="true">?</span>{L.alCheck}</span>
+          )}
         </div>
       </div>
 

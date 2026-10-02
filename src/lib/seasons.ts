@@ -9,10 +9,11 @@ export const seasonsNow = (month: number, seasons: readonly Season[] = BOOK.seas
 
 /**
  * The season to get ready for: the first one starting after `month` that is not
- * already running, else the first season of the year (wraps December → January).
+ * already running, else the first season of the year (wraps December → January);
+ * null when there is no season at all.
  */
-export const nextSeason = (month: number, seasons: readonly Season[] = BOOK.seasons): Season =>
-  seasons.find(x => x.m[0] > month && !x.m.includes(month)) || seasons[0];
+export const nextSeason = (month: number, seasons: readonly Season[] = BOOK.seasons): Season | null =>
+  seasons.find(x => x.m[0] > month && !x.m.includes(month)) || seasons[0] || null;
 
 /** Season block view model (the prototype's `sc()`), shared by the home page and Saisons. */
 export interface SeasonVM {

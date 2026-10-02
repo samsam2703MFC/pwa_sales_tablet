@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readConfig } from './config';
+import { readConfig, readShop, SHOP_KEY, type ShopStorage } from './config';
 
 describe('readConfig — language', () => {
   it('defaults to French', () => {
@@ -70,5 +70,67 @@ describe('readConfig — pinned date', () => {
 
   it.each(['15/12/2026', '2026-1-5', '2026-12-15T10:00', 'today', '20261215'])('rejects the malformed date %s', v => {
     expect(readConfig(`?date=${encodeURIComponent(v)}`, {}).date).toBeNull();
+  });
+});
+
+/** In-memory Storage. */
+const memory = (init: Record<string, string> = {}): ShopStorage & { data: Record<string, string> } => {
+  const data = { ...init };
+  return {
+    data,
+    getItem: k => (k in data ? data[k] : null),
+    setItem: (k, v) => { data[k] = String(v); },
+    removeItem: k => { delete data[k]; },
+  };
+};
+
+describe('readShop — shop identity, remembered on the device', () => {
+  it('no shop by default (network-wide book)', () => {
+    expect(readShop('', memory())).toBeNull();
+    expect(readConfig('', {}).shop).toBeNull();
+  });
+
+  it('?shop=<digits> picks the shop and remembers it (the installed app opens without the query string)', () => {
+    const s = memory();
+    expect(readShop('?shop=4', s)).toBe('4');
+    expect(s.data).toEqual({ [SHOP_KEY]: '4' });
+    expect(readShop('', s)).toBe('4');
+    expect(readShop('?lang=nl', s)).toBe('4');
+    expect(readConfig('?prices=0', {}, s).shop).toBe('4');
+  });
+
+  it('a new ?shop= replaces the remembered one; ?shop= (empty) forgets it', () => {
+    const s = memory({ [SHOP_KEY]: '4' });
+    expect(readShop('?shop=12', s)).toBe('12');
+    expect(s.data[SHOP_KEY]).toBe('12');
+    expect(readShop('?shop=', s)).toBeNull();
+    expect(s.data).toEqual({});
+    expect(readShop('', s)).toBeNull();
+    s.data[SHOP_KEY] = '4';
+    expect(readShop('?shop=%20', s)).toBeNull();
+    expect(s.data).toEqual({});
+  });
+
+  it.each(['abc', '4a', '-4', '4.5', '1234567890', '4%204'])('ignores the malformed value %s (the remembered shop stays)', v => {
+    const s = memory({ [SHOP_KEY]: '7' });
+    expect(readShop(`?shop=${v}`, s)).toBe('7');
+    expect(s.data[SHOP_KEY]).toBe('7');
+  });
+
+  it('ignores a tampered remembered value', () => {
+    expect(readShop('', memory({ [SHOP_KEY]: '<script>' }))).toBeNull();
+  });
+
+  it('works without storage, or when it throws (private mode, blocked site data)', () => {
+    const throwing: ShopStorage = {
+      getItem: () => { throw new DOMException('denied', 'SecurityError'); },
+      setItem: () => { throw new DOMException('full', 'QuotaExceededError'); },
+      removeItem: () => { throw new DOMException('denied', 'SecurityError'); },
+    };
+    expect(readShop('?shop=4', throwing)).toBe('4');
+    expect(readShop('', throwing)).toBeNull();
+    expect(readShop('?shop=', throwing)).toBeNull();
+    expect(readShop('?shop=4', null)).toBe('4');
+    expect(readShop('', null)).toBeNull();
   });
 });

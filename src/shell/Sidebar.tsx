@@ -1,11 +1,13 @@
+import { BOOK_SOURCE } from '../data/book';
 import { asset } from '../lib/asset';
 import { useApp } from '../state/store';
 import { LangToggle } from './LangToggle';
-import { isNavActive, navAria, navGroups } from './shell.logic';
+import { isNavActive, navAria, navGroups, sourceLabel } from './shell.logic';
 import s from './Sidebar.module.css';
 
 /**
- * Landscape (≥ 1000 px) sticky left column: logo, grouped navigation, FR/NL toggle, sample-data note.
+ * Landscape (≥ 1000 px) sticky left column: logo, grouped navigation, FR/NL toggle, data-source
+ * note (the prototype's sample-data sentence, or where the BO data comes from).
  * `inert` while the product sheet (modal) is open.
  */
 export function Sidebar({ inert }: { inert?: boolean }) {
@@ -39,7 +41,7 @@ export function Sidebar({ inert }: { inert?: boolean }) {
       </nav>
       <div className={s.foot}>
         <LangToggle variant="sidebar" />
-        <div className={s.sample}>{L.sample}</div>
+        <div className={s.sample}>{sourceLabel(BOOK_SOURCE, lang, true)}</div>
       </div>
     </aside>
   );

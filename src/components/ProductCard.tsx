@@ -19,7 +19,7 @@ export function ProductCard({ p, details = true }: { p: ProductCardVM; details?:
       className={s.card}
       onClick={() => actions.openProduct(p.id)}
       aria-labelledby={labelledBy}
-      aria-describedby={details && p.als.length ? `${id}-a` : undefined}
+      aria-describedby={details && (p.als.length || p.alUnknown) ? `${id}-a` : undefined}
     >
       <span className={s.media}>
         <img src={p.img} alt="" loading="lazy" decoding="async" className={s.img} />
@@ -45,6 +45,8 @@ export function ProductCard({ p, details = true }: { p: ProductCardVM; details?:
             {p.als.map(a => (
               <span key={a} className={s.code}>{a}</span>
             ))}
+            {/* Unverified allergen list (BO data): no codes must not read as "no allergen". */}
+            {p.alUnknown && <span className={s.unk}>{L.alCheck}</span>}
           </span>
         )}
       </span>

@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { FIXTURE_BOOK, FIXTURE_CATALOG as LK, product } from '../test/fixtures';
-import { cardById, cardsByIds, catalogOf, knownProducts, toCard } from './catalog';
+import { allergensUnknown, cardById, cardsByIds, catalogOf, knownProducts, toCard, tr } from './catalog';
 
 const P = (id: string) => LK.products[id]!;
 
 describe('toCard', () => {
   it('builds the card in each language, allergen codes in the product order', () => {
     expect(toCard(P('p2'), 0, LK)).toEqual({
-      id: 'p2', name: 'p2-fr', img: '/img/p/p2.png', price: '4,00 €', unit: 'pièce', als: ['AAA', 'BBB'],
+      id: 'p2', name: 'p2-fr', img: '/img/p/p2.png', price: '4,00 €', unit: 'pièce', als: ['AAA', 'BBB'], alUnknown: false,
       best: false, seasonal: true, seasonName: 'Printemps', vegan: false, vege: true,
     });
     expect(toCard(P('p2'), 1, LK)).toMatchObject({ name: 'p2-nl', unit: 'stuk', seasonName: 'Lente' });
@@ -44,5 +44,29 @@ describe('catalogOf', () => {
     expect(LK.categories.c2?.n[0]).toBe('Catégorie deux');
     expect(LK.seasons.ghost).toBeUndefined();
     expect(catalogOf(FIXTURE_BOOK)).toBe(LK);
+  });
+});
+
+describe('tr', () => {
+  it('picks the language, an empty Dutch text falls back to French (BO data)', () => {
+    expect(tr(['Pain', 'Brood'], 1)).toBe('Brood');
+    expect(tr(['Pain', ''], 1)).toBe('Pain');
+    expect(tr(['Pain', ''], 0)).toBe('Pain');
+    expect(tr(['', 'Brood'], 0)).toBe('');
+    expect(tr(null, 1)).toBe('');
+  });
+});
+
+describe('BO products in cards', () => {
+  it('no picture → placeholder; unverified allergens flagged', () => {
+    const x = product('x', { img: '', alKnown: false });
+    expect(toCard(x, 0, LK)).toMatchObject({ img: '/img/placeholder.svg', als: [], alUnknown: true });
+    expect(toCard(product('y', { img: 'http://bo.test/uploads/tablette/y-640.jpg' }), 0, LK).img).toBe('http://bo.test/uploads/tablette/y-640.jpg');
+  });
+
+  it('allergensUnknown: only an explicit false (absent = the sample, verified)', () => {
+    expect(allergensUnknown({ alKnown: false })).toBe(true);
+    expect(allergensUnknown({ alKnown: true })).toBe(false);
+    expect(allergensUnknown({})).toBe(false);
   });
 });

@@ -12,6 +12,11 @@ import { openSection, pageTitle, ROOT, waitForServiceWorker } from './helpers';
  */
 const DIST = path.join(ROOT, 'dist');
 const PREFIX = '/book-vendeuses/';
+/**
+ * The BO book, asked for next to the app folder (`../api/cockpit`, src/lib/api.ts). This plain
+ * static server has no BO: the app must start on its sample data (e2e/bo.spec.ts covers the BO).
+ */
+const BOOK_PATH = '/api/cockpit/tablette/book';
 const TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript',
@@ -102,6 +107,8 @@ test.describe('deployed in a sub-folder', () => {
     await context.setOffline(false);
 
     expect(errors).toEqual([]);
-    expect(misses).toEqual([]);
+    // Nothing else is missing: the only request outside the folder is the (expected) BO book.
+    expect(misses).toContain(BOOK_PATH);
+    expect(misses.filter(url => url !== BOOK_PATH)).toEqual([]);
   });
 });

@@ -43,18 +43,25 @@ describe('reflexes', () => {
 });
 
 describe('pairs', () => {
-  it('one row per product, in data order', () => {
-    expect(pairs(0, F.products, LK).map(r => r.id)).toEqual(['p1', 'p2', 'p3', 'p4', 'p5']);
+  it('one row per product that has something to suggest, in data order', () => {
+    expect(pairs(0, F.products, LK).map(r => r.id)).toEqual(['p1', 'p2', 'p4']);
+  });
+
+  it('leaves out a product with no known cross-sell product and no sentence (BO data)', () => {
+    expect(pairs(0, [product('x'), product('y', { cross: ['ghost'] })], LK)).toEqual([]);
+    expect(pairs(0, [product('z', { crossLine: ['Avec un café ?', ''] })], LK)).toEqual([{ id: 'z', name: 'z-fr', cross: '', line: 'Avec un café ?' }]);
+    // an empty Dutch sentence falls back to the French one
+    expect(pairs(1, [product('z', { crossLine: ['Avec un café ?', ''] })], LK)[0].line).toBe('Avec un café ?');
   });
 
   it('joins the cross-sell names with " · ", skips unknown ids, keeps the sentence (FR / NL)', () => {
     expect(pairs(0, F.products, LK)[0]).toEqual({ id: 'p1', name: 'p1-fr', cross: 'p2-fr', line: 'Avec une tarte ?' });
     expect(pairs(1, F.products, LK)[0]).toEqual({ id: 'p1', name: 'p1-nl', cross: 'p2-nl', line: 'Met een taart?' });
-    expect(pairs(0, F.products, LK)[3].cross).toBe('p1-fr · p1-fr');
+    expect(pairs(0, F.products, LK)[2].cross).toBe('p1-fr · p1-fr');
   });
 
-  it('no cross-sell → empty string', () => {
-    expect(pairs(0, [product('x')], LK)[0].cross).toBe('');
+  it('only a sentence → empty cross-sell names', () => {
+    expect(pairs(0, [product('x', { crossLine: ['Dites-le', 'Zeg het'] })], LK)[0].cross).toBe('');
   });
 });
 

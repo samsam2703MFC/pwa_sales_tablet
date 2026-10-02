@@ -81,13 +81,13 @@ describe('sample data (prototype golden values)', () => {
     const m = homeModel(0, 10);
     expect(m.quick).toHaveLength(6);
     expect(m.now.map(x => x.name)).toEqual(['Automne']);
-    expect(m.next.name).toBe('Saint-Nicolas');
+    expect(m.next?.name).toBe('Saint-Nicolas');
     expect(m.best).toHaveLength(6);
   });
 
   it('assembles the home for December (NL)', () => {
     const m = homeModel(1, 12);
     expect(m.now.map(x => x.name)).toEqual(['Sinterklaas', 'Kerst & Nieuwjaar']);
-    expect(m.next.name).toBe('Driekoningen');
+    expect(m.next?.name).toBe('Driekoningen');
   });
 });

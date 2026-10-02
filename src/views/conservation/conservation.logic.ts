@@ -18,7 +18,7 @@ export interface ConsGroupVM {
   rows: ConsRowVM[];
 }
 
-/** The prototype's `consGroups`: every category (data order) with its products (data order). */
+/** The prototype's `consGroups`: every category (data order) with its products (data order); empty categories are left out. */
 export const consGroups = (
   lang: Lang,
   categories: readonly Category[] = BOOK.categories,
@@ -31,5 +31,5 @@ export const consGroups = (
     rows: products
       .filter(p => p.cat === c.id)
       .map(x => ({ id: x.id, name: tr(x.name, lang), dlc: dlcLabel(x.dlc, L), keep: tr(x.keep, lang) })),
-  }));
+  })).filter(g => g.rows.length > 0);
 };

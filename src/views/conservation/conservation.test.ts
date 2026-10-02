@@ -26,8 +26,8 @@ describe('consGroups', () => {
     expect(g[1].rows[1].dlc).toBe('Onmiddellijk');
   });
 
-  it('keeps a category even when it has no product (prototype behaviour)', () => {
-    expect(consGroups(0, [{ id: 'x', n: ['Vide', 'Leeg'] }], F.products)).toEqual([{ id: 'x', name: 'Vide', rows: [] }]);
+  it('leaves out a category without product (no empty block; the sample has none)', () => {
+    expect(consGroups(0, [{ id: 'x', n: ['Vide', 'Leeg'] }, ...F.categories], F.products).map(g => g.id)).toEqual(['c1', 'c2']);
   });
 
   it('a product of an unknown category is in no group', () => {

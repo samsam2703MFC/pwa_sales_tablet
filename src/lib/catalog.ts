@@ -35,20 +35,25 @@ export const SEASONS = CATALOG.seasons;
 export const CATEGORIES = CATALOG.categories;
 export const PRODUCTS = CATALOG.products;
 
-/** Pick the text for the current language. */
-export const tr = (a: T2 | null | undefined, lang: Lang): string => (a ? a[lang] : '');
+/** Pick the text for the current language; an empty Dutch text falls back to the French one. */
+export const tr = (a: T2 | null | undefined, lang: Lang): string => (a ? a[lang] || a[0] : '');
+
+/** The product's allergen list is not verified (BO data): it must never read as "free of" anything. */
+export const allergensUnknown = (p: Pick<Product, 'alKnown'>): boolean => p.alKnown === false;
 
 /** Product view model shared by cards, pills and lists (the prototype's `card()`). */
 export interface ProductCardVM {
   id: string;
   name: string;
-  /** Resolved image URL. */
+  /** Resolved image URL (placeholder when the product has no picture). */
   img: string;
   /** Formatted price, '' if hidden/unknown. */
   price: string;
   unit: string;
   /** Allergen 3-letter codes. */
   als: string[];
+  /** The allergen list is unverified: `als` may be incomplete ("à vérifier"). */
+  alUnknown: boolean;
   best: boolean;
   seasonal: boolean;
   seasonName: string;
@@ -64,6 +69,7 @@ export const toCard = (x: Product, lang: Lang, lk: Pick<Catalog, 'allergens' | '
   price: fmtPrice(x.price),
   unit: tr(x.unit, lang),
   als: x.al.flatMap(a => lk.allergens[a]?.s ?? []),
+  alUnknown: allergensUnknown(x),
   best: !!x.best,
   seasonal: !!x.season,
   seasonName: tr(x.season ? lk.seasons[x.season]?.n : null, lang),

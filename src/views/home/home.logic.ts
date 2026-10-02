@@ -48,13 +48,17 @@ export const ONB_MODULES = ONB_SHORT.length;
 export interface HomeModel {
   quick: QuickAskVM[];
   now: SeasonVM[];
-  next: SeasonVM;
+  /** null when the book has no season. */
+  next: SeasonVM | null;
   best: ProductCardVM[];
 }
 
-export const homeModel = (lang: Lang, month: number): HomeModel => ({
-  quick: quickAsks(lang),
-  now: seasonsNow(month).map(x => toSeasonVM(x, lang)),
-  next: toSeasonVM(nextSeason(month), lang),
-  best: bestSellers(lang),
-});
+export const homeModel = (lang: Lang, month: number): HomeModel => {
+  const next = nextSeason(month);
+  return {
+    quick: quickAsks(lang),
+    now: seasonsNow(month).map(x => toSeasonVM(x, lang)),
+    next: next && toSeasonVM(next, lang),
+    best: bestSellers(lang),
+  };
+};

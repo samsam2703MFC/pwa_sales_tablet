@@ -1,8 +1,25 @@
 // Book vendeuses — DONNÉES D'EXEMPLE à remplacer par la fiche produit officielle.
 // Chaque texte = [FR, NL]. Source : handoff design (book-data.js).
-import type { BookData } from './types';
+import type { BookData, BookSource } from './types';
 
-export const BOOK: BookData = {
+/**
+ * The book on screen: the sample below, or the BO book merged into it (src/data/remote.ts),
+ * set by src/main.tsx with `setBook` BEFORE the views are imported. ES-module live bindings:
+ * every `= BOOK.x` default parameter reads the current value at call time; src/lib/catalog.ts
+ * builds its lookups from it when it is first loaded (hence the dynamic import of the app).
+ */
+export let BOOK: BookData;
+/** Where BOOK comes from (data-source indicator). */
+export let BOOK_SOURCE: BookSource;
+
+export const SAMPLE_SOURCE: BookSource = { kind: 'sample', version: null, generatedAt: null, shop: null };
+
+export function setBook(book: BookData, source: BookSource): void {
+  BOOK = book;
+  BOOK_SOURCE = source;
+}
+
+export const SAMPLE_BOOK: BookData = {
 allergens: [
   {id:'gluten', n:['Gluten','Gluten'], s:'GLU'},
   {id:'crust', n:['Crustacés','Schaaldieren'], s:'CRU'},
@@ -300,3 +317,5 @@ stats: {
  ]
 }
 };
+
+setBook(SAMPLE_BOOK, SAMPLE_SOURCE);

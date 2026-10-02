@@ -128,3 +128,13 @@
   background: var(--color-code-bg);
   color: var(--color-primary);
 }
+
+/* Unverified allergen list (BO data). */
+.unk {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px dashed var(--color-collection-border);
+  color: var(--color-collection-icon);
+}

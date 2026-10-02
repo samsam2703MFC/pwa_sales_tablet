@@ -4,7 +4,7 @@ import { FIXTURE_BOOK as F, FIXTURE_CATALOG as LK } from '../test/fixtures';
 import { nextSeason, seasonsNow, toSeasonVM } from './seasons';
 
 const now = (month: number) => seasonsNow(month, F.seasons).map(x => x.id);
-const next = (month: number) => nextSeason(month, F.seasons).id;
+const next = (month: number) => nextSeason(month, F.seasons)?.id;
 
 describe('season selection', () => {
   it('seasons running this month, in data order (several can overlap)', () => {
@@ -25,7 +25,7 @@ describe('season selection', () => {
   });
 
   it('never proposes a running season as the next one', () => {
-    for (let month = 1; month <= 12; month++) expect(nextSeason(month, F.seasons).m).not.toContain(month);
+    for (let month = 1; month <= 12; month++) expect(nextSeason(month, F.seasons)?.m).not.toContain(month);
   });
 });
 
@@ -65,7 +65,7 @@ describe('sample data (prototype golden values)', () => {
     const [ids, nextId] = EXPECTED[month];
     it(`month ${month}: now = ${ids.join(', ')}, next = ${nextId}`, () => {
       expect(seasonsNow(month).map(x => x.id)).toEqual(ids);
-      expect(nextSeason(month).id).toBe(nextId);
+      expect(nextSeason(month)?.id).toBe(nextId);
     });
   }
 

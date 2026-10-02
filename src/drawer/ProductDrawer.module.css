@@ -340,6 +340,37 @@
   color: var(--color-absent-text);
 }
 
+/* Unverified allergen list (BO data): a notice instead of the 14 tiles. */
+.alCheck {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-collection-border);
+  color: var(--color-collection-icon);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.alCheckTitle {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.alRaw {
+  color: var(--color-text);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Traces never entered (verified allergens). */
+.trUnk {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-collection-icon);
+}
+
 /* --- Ingredients, shelf life ------------------------------------------------ */
 .ingredients {
   display: flex;

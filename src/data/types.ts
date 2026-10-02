@@ -34,6 +34,16 @@ export interface Product {
   al: string[];
   /** Allergen ids the product may contain as traces. */
   tr: string[];
+  /**
+   * false: `al` is not a verified list (allergens not entered or not parsed in the BO): the
+   * product is never shown as free of any allergen ("à vérifier sur l'étiquette").
+   * Absent = true (sample data).
+   */
+  alKnown?: boolean;
+  /** false: traces were never entered, so the product is never shown as trace-free. Absent = true. */
+  trKnown?: boolean;
+  /** The allergen text of the BO product sheet, as entered (shown when `alKnown` is false). */
+  alRaw?: string;
   diet: Diet;
   keep: T2;
   /** Shelf life in days (0 = immediate). */
@@ -127,4 +137,16 @@ export interface OnbShortModule {
   scripts: OnbScript[];
   exo: T2;
   gain: T2 | null;
+}
+
+/** Where the book on screen comes from (data-source indicator). */
+export interface BookSource {
+  /** 'bo': fresh from the back-office; 'cache': the BO book saved on the device (offline); 'sample': bundled sample data. */
+  kind: 'bo' | 'cache' | 'sample';
+  /** Content hash of the BO book (null for the sample). */
+  version: string | null;
+  /** When the BO built the book (ISO 8601), null for the sample. */
+  generatedAt: string | null;
+  /** The shop the book was built for (null: network-wide, or the sample). */
+  shop: { id: string; name: string } | null;
 }

@@ -111,6 +111,32 @@ describe('sheetVM', () => {
   });
 });
 
+describe('BO products (partial, unverified data)', () => {
+  const book = (over: Parameters<typeof product>[1]) => ({ ...F, products: [...F.products, product('bo', over)] });
+
+  it('unverified allergens: no "absent" tile (only what is known to be there), the BO text, the flag', () => {
+    const vm = sheetVM('bo', -1, 0, book({ al: ['a2'], alKnown: false, trKnown: false, alRaw: ' Contient : lait. ' }))!;
+    expect(vm).toMatchObject({ alKnown: false, trKnown: false, alRaw: 'Contient : lait.' });
+    expect(vm.grid).toEqual([{ id: 'a2', n: 'Bêta', state: 'contains' }]);
+    expect(sheetVM('bo', -1, 0, book({ alKnown: false }))!.grid).toEqual([]);
+  });
+
+  it('verified allergens, traces never entered: the full grid, the flag', () => {
+    const vm = sheetVM('bo', -1, 0, book({ al: ['a1'], alKnown: true, trKnown: false }))!;
+    expect(vm.grid.map(t => t.state)).toEqual(['contains', 'absent', 'absent']);
+    expect([vm.alKnown, vm.trKnown, vm.alRaw]).toEqual([true, false, '']);
+  });
+
+  it('the sample (flags absent) is verified', () => {
+    expect(sheetVM('p1', -1, 0, F)).toMatchObject({ alKnown: true, trKnown: true, alRaw: '' });
+  });
+
+  it('empty texts stay empty (the sheet leaves those blocks out); Dutch falls back to French', () => {
+    const vm = sheetVM('bo', -1, 1, book({ name: ['Croissant', ''], keep: ['Au sec', ''] }))!;
+    expect(vm).toMatchObject({ name: 'Croissant', pitch: '', desc: '', ingr: '', keep: 'Au sec', crossLine: '', cross: [], faq: [] });
+  });
+});
+
 describe('sample data (prototype golden values)', () => {
   const B = (id: string) => PRODUCTS[id]!;
 

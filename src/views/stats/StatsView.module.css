@@ -53,6 +53,28 @@
   font-weight: 500;
 }
 
+/* --- "Données d'exemple" banner (not in the prototype) ------------------- */
+.sample {
+  margin: 0;
+  padding: 14px 20px;
+  border-radius: var(--radius-lg);
+  background: var(--color-secondary);
+  color: var(--color-on-abricot);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* Same label as the product sheet's "À dire au client". */
+.sampleTitle {
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
 /* --- KPI cards ------------------------------------------------------------ */
 .kpis {
   display: grid;

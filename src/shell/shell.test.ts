@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { isNavActive, isTabActive, moreGroups, navGroups, tabLabel } from './shell.logic';
+import { SAMPLE_SOURCE } from '../data/book';
+import { isNavActive, isTabActive, moreGroups, navGroups, sourceDate, sourceLabel, tabLabel } from './shell.logic';
 
 describe('isNavActive', () => {
   it('is active on its own view without search text', () => {
@@ -73,5 +74,30 @@ describe('moreGroups', () => {
     const nl = moreGroups(1);
     expect(nl.map(g => g.title)).toEqual(['Verkoop', 'Opleiding']);
     expect(nl[0].items.map(i => i.label)).toEqual(['Seizoenen', 'Meer verkopen', 'Diensten', 'Bewaring', 'Statistieken']);
+  });
+});
+
+describe('sourceLabel — data-source indicator', () => {
+  const bo = { kind: 'bo', version: 'v1', generatedAt: '2026-10-02T09:12:00+02:00', shop: { id: '4', name: 'Ixelles' } } as const;
+
+  it('sample: the prototype sentence (sidebar) or a short label (portrait header)', () => {
+    expect(sourceLabel(SAMPLE_SOURCE, 0, true)).toBe("Données d'exemple — à remplacer par les fiches produit officielles.");
+    expect(sourceLabel(SAMPLE_SOURCE, 0)).toBe("Données d'exemple");
+    expect(sourceLabel(SAMPLE_SOURCE, 1)).toBe('Voorbeeldgegevens');
+  });
+
+  it('BO: shop and generation time (device time zone)', () => {
+    const when = sourceDate(bo.generatedAt, 0);
+    expect(when).toMatch(/^2 oct\.? \d\d[:h.]\d\d$/);
+    expect(sourceLabel(bo, 0)).toBe(`BO · Ixelles · ${when}`);
+    expect(sourceLabel(bo, 0, true)).toBe(`BO · Ixelles · ${when}`);
+    expect(sourceLabel({ ...bo, shop: null }, 1)).toBe(`BO · netwerk · ${sourceDate(bo.generatedAt, 1)}`);
+    expect(sourceLabel({ ...bo, generatedAt: null }, 0)).toBe('BO · Ixelles');
+  });
+
+  it('offline: the cached book and its date', () => {
+    expect(sourceLabel({ ...bo, kind: 'cache' }, 0)).toBe(`Hors ligne · données du ${sourceDate(bo.generatedAt, 0)}`);
+    expect(sourceLabel({ ...bo, kind: 'cache' }, 1)).toBe(`Offline · gegevens van ${sourceDate(bo.generatedAt, 1)}`);
+    expect(sourceLabel({ ...bo, kind: 'cache', generatedAt: 'garbage' }, 0)).toBe('Hors ligne');
   });
 });

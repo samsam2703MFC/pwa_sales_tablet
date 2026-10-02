@@ -1,5 +1,5 @@
-import type { Lang } from '../data/types';
-import { NAV, groupTitle, navLabel, type NavGroup, type View } from '../lib/i18n';
+import type { BookSource, Lang } from '../data/types';
+import { NAV, groupTitle, labels, locale, navLabel, type NavGroup, type View } from '../lib/i18n';
 
 /**
  * Pure chrome logic (prototype `renderVals()` → navItem / tab() / moreGroups).
@@ -66,3 +66,25 @@ export const moreGroups = (lang: Lang): MoreGroupVM[] =>
     title: groupTitle(key, lang),
     items: items.map(([id, img]) => ({ id, label: navLabel(id, lang), img })),
   }));
+
+/** "2 oct. 09:12" / "2 okt. 09:12" in the device time zone, '' when missing or malformed. */
+export const sourceDate = (iso: string | null, lang: Lang): string => {
+  const d = iso ? new Date(iso) : null;
+  if (!d || Number.isNaN(d.getTime())) return '';
+  const loc = locale(lang);
+  return d.toLocaleDateString(loc, { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
+};
+
+/**
+ * Data-source indicator: "BO · <shop> · <generated>", "Hors ligne · données du <generated>",
+ * or the sample note — `long`: the prototype's sidebar sentence, else "Données d'exemple".
+ */
+export const sourceLabel = (src: BookSource, lang: Lang, long = false): string => {
+  const L = labels(lang);
+  const when = sourceDate(src.generatedAt, lang);
+  switch (src.kind) {
+    case 'sample': return long ? L.sample : L.srcSample;
+    case 'cache': return when ? `${L.srcOffline} · ${L.srcOfflineOf} ${when}` : L.srcOffline;
+    case 'bo': return ['BO', src.shop?.name || L.srcNetwork, when].filter(Boolean).join(' · ');
+  }
+};

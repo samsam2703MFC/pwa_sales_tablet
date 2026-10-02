@@ -1,6 +1,6 @@
 import { BOOK } from '../data/book';
 import type { Allergen, BookData, FaqItem, Lang, Product, Season } from '../data/types';
-import { cardsByIds, catalogOf, PRODUCTS, SEASONS, toCard, tr, type Lookup, type ProductCardVM } from '../lib/catalog';
+import { allergensUnknown, cardsByIds, catalogOf, PRODUCTS, SEASONS, toCard, tr, type Lookup, type ProductCardVM } from '../lib/catalog';
 import { dlcLabel } from '../lib/format';
 import { labels } from '../lib/i18n';
 
@@ -38,6 +38,13 @@ export interface SheetVM extends ProductCardVM {
   crossLine: string;
   /** Availability badge: "Toute l'année" or "Season · dates". */
   avail: string;
+  /** false: the allergen list is unverified (BO data): "à vérifier" notice instead of the full grid. */
+  alKnown: boolean;
+  /** false: traces were never entered (note under the grid). */
+  trKnown: boolean;
+  /** Allergen text of the BO product sheet, shown with the "à vérifier" notice ('' when none). */
+  alRaw: string;
+  /** The 14 allergen tiles; only the "contains" / "traces" ones when the list is unverified. */
   grid: AllergenTileVM[];
   faq: SheetFaqVM[];
   /** Cross-sell products ("Proposez aussi"). */
@@ -54,9 +61,14 @@ export const availability = (p: Product, lang: Lang, seasons: Lookup<Season> = S
 export const allergenState = (p: Product, id: string): AllergenState =>
   p.al.includes(id) ? 'contains' : p.tr.includes(id) ? 'traces' : 'absent';
 
-/** The 14 allergens, in data order, with the product's state for each. */
+/**
+ * The 14 allergens, in data order, with the product's state for each. When the product's list
+ * is unverified, only what is known to be there: an "absent" tile would claim it is free of it.
+ */
 export const allergenGrid = (p: Product, lang: Lang, allergens: readonly Allergen[] = BOOK.allergens): AllergenTileVM[] =>
-  allergens.map(a => ({ id: a.id, n: tr(a.n, lang), state: allergenState(p, a.id) }));
+  allergens
+    .map(a => ({ id: a.id, n: tr(a.n, lang), state: allergenState(p, a.id) }))
+    .filter(t => t.state !== 'absent' || !allergensUnknown(p));
 
 /**
  * FAQ questions whose linked products include `id`, in data order, keeping their BOOK.faq index;
@@ -92,6 +104,9 @@ export const sheetVM = (id: string | null, selFaq: number, lang: Lang, book: Boo
     dlc: dlcLabel(x.dlc, labels(lang)),
     crossLine: tr(x.crossLine, lang),
     avail: availability(x, lang, lk.seasons),
+    alKnown: !allergensUnknown(x),
+    trKnown: x.trKnown !== false,
+    alRaw: x.alRaw?.trim() ?? '',
     grid: allergenGrid(x, lang, book.allergens),
     faq: productFaq(x.id, selFaq, lang, book.faq),
     // A repeated id gives a repeated pill, as in the prototype.

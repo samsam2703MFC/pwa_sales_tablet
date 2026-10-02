@@ -44,11 +44,16 @@ export interface PairVM {
   line: string;
 }
 
-/** The prototype's `pairs`: every product, in data order. */
+/**
+ * The prototype's `pairs`: every product, in data order — except those with nothing to suggest
+ * (no known cross-sell product and no sentence: BO products until they are filled in).
+ */
 export const pairs = (lang: Lang, products: readonly Product[] = BOOK.products, lk: Catalog = CATALOG): PairVM[] =>
-  products.map(x => ({
-    id: x.id,
-    name: tr(x.name, lang),
-    cross: knownProducts(x.cross, lk.products).map(p => tr(p.name, lang)).join(' · '),
-    line: tr(x.crossLine, lang),
-  }));
+  products
+    .map(x => ({
+      id: x.id,
+      name: tr(x.name, lang),
+      cross: knownProducts(x.cross, lk.products).map(p => tr(p.name, lang)).join(' · '),
+      line: tr(x.crossLine, lang),
+    }))
+    .filter(r => r.cross || r.line);

@@ -126,10 +126,12 @@ function Sheet() {
             </div>
             <div className={s.heroText}>
               <h2 id={titleId} className={s.name}>{vm.name}</h2>
-              <div className={s.priceRow}>
-                <span className={s.price}>{vm.price}</span>
-                <span className={s.unit}>{vm.unit}</span>
-              </div>
+              {(vm.price || vm.unit) && (
+                <div className={s.priceRow}>
+                  <span className={s.price}>{vm.price}</span>
+                  <span className={s.unit}>{vm.unit}</span>
+                </div>
+              )}
               <div className={s.badges}>
                 <span className={`${s.badge} ${s.avail}`}>{vm.avail}</span>
                 {vm.vegan && <span className={`${s.badge} ${s.vegan}`}>VEGAN</span>}
@@ -139,47 +141,66 @@ function Sheet() {
             </div>
           </div>
 
-          <div className={s.say}>
-            <h3 className={s.sayLabel}>{L.say}</h3>
-            <span className={s.pitch}>« {vm.pitch} »</span>
-          </div>
+          {/* BO products may come without these texts yet: empty blocks are left out. */}
+          {vm.pitch && (
+            <div className={s.say}>
+              <h3 className={s.sayLabel}>{L.say}</h3>
+              <span className={s.pitch}>« {vm.pitch} »</span>
+            </div>
+          )}
 
-          <p className={s.desc}>{vm.desc}</p>
+          {vm.desc && <p className={s.desc}>{vm.desc}</p>}
 
           <div className={s.allergens}>
             <div className={s.alHead}>
               <h3 className={s.eyebrow}>{L.alg}</h3>
-              <span className={s.legend}>
-                <span className={s.legendItem}><span className={s.dot} aria-hidden="true" />{L.contains}</span>
-                <span className={s.legendItem}><span className={s.ring} aria-hidden="true" />{L.traces}</span>
-              </span>
+              {vm.grid.length > 0 && (
+                <span className={s.legend}>
+                  <span className={s.legendItem}><span className={s.dot} aria-hidden="true" />{L.contains}</span>
+                  <span className={s.legendItem}><span className={s.ring} aria-hidden="true" />{L.traces}</span>
+                </span>
+              )}
             </div>
-            <ul className={s.alGrid}>
-              {vm.grid.map(a => (
-                <li key={a.id} className={`${s.al} ${TILE[a.state]}`}>
-                  {a.n}
-                  {a.state !== 'absent' && (
-                    <span className="sr-only">: {a.state === 'contains' ? L.contains : L.traces}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
+            {!vm.alKnown && (
+              <div className={s.alCheck}>
+                <strong className={s.alCheckTitle}>{L.alCheck}</strong>
+                <span>{L.alUnkText}</span>
+                {vm.alRaw && <span className={s.alRaw}>{L.alRawL} {vm.alRaw}</span>}
+              </div>
+            )}
+            {vm.grid.length > 0 && (
+              <ul className={s.alGrid}>
+                {vm.grid.map(a => (
+                  <li key={a.id} className={`${s.al} ${TILE[a.state]}`}>
+                    {a.n}
+                    {a.state !== 'absent' && (
+                      <span className="sr-only">: {a.state === 'contains' ? L.contains : L.traces}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {vm.alKnown && !vm.trKnown && <p className={s.trUnk}>{L.trUnk}</p>}
           </div>
 
-          <div className={s.ingredients}>
-            <h3 className={s.eyebrow}>{L.ingr}</h3>
-            <span className={s.ingr}>{vm.ingr}</span>
-          </div>
+          {vm.ingr && (
+            <div className={s.ingredients}>
+              <h3 className={s.eyebrow}>{L.ingr}</h3>
+              <span className={s.ingr}>{vm.ingr}</span>
+            </div>
+          )}
 
           <div className={s.keepBlock}>
             <div className={s.keepCol}>
               <h3 className={s.eyebrow}>{L.dlc}</h3>
               <span className={s.dlc}>{vm.dlc}</span>
             </div>
-            <div className={s.keepCol}>
-              <h3 className={s.eyebrow}>{L.keep}</h3>
-              <span className={s.keep}>{vm.keep}</span>
-            </div>
+            {vm.keep && (
+              <div className={s.keepCol}>
+                <h3 className={s.eyebrow}>{L.keep}</h3>
+                <span className={s.keep}>{vm.keep}</span>
+              </div>
+            )}
           </div>
 
           {vm.faq.length > 0 && (
@@ -206,14 +227,18 @@ function Sheet() {
             </div>
           )}
 
-          <div className={s.also}>
-            <h3 className={s.eyebrow}>{L.also}</h3>
-            <span className={s.crossLine}>« {vm.crossLine} »</span>
-            <PillRow>
-              {/* Keyed by position: hand-entered data may repeat an id (duplicate keys left a stale pill on product switch). */}
-              {vm.cross.map((m, i) => <ProductPill key={i + '-' + m.id} p={m} size="lg" hover />)}
-            </PillRow>
-          </div>
+          {(vm.crossLine || vm.cross.length > 0) && (
+            <div className={s.also}>
+              <h3 className={s.eyebrow}>{L.also}</h3>
+              {vm.crossLine && <span className={s.crossLine}>« {vm.crossLine} »</span>}
+              {vm.cross.length > 0 && (
+                <PillRow>
+                  {/* Keyed by position: hand-entered data may repeat an id (duplicate keys left a stale pill on product switch). */}
+                  {vm.cross.map((m, i) => <ProductPill key={i + '-' + m.id} p={m} size="lg" hover />)}
+                </PillRow>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

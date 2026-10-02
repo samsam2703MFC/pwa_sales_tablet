@@ -32,33 +32,33 @@ function reference(ex: string[]) {
 
 describe('allergenStatus', () => {
   it('no selection: neither OK, traces nor dimmed', () => {
-    for (const p of PRODS) expect(allergenStatus(p, [])).toEqual({ bad: false, warn: false, ok: false });
+    for (const p of PRODS) expect(allergenStatus(p, [])).toEqual({ bad: false, warn: false, ok: false, unknown: false });
   });
 
   it('contains an excluded allergen → bad (contains wins over traces)', () => {
-    expect(allergenStatus(PRODS[0], ['noix', 'lait'])).toEqual({ bad: true, warn: false, ok: false });
-    expect(allergenStatus(PRODS[1], ['gluten'])).toEqual({ bad: true, warn: false, ok: false });
+    expect(allergenStatus(PRODS[0], ['noix', 'lait'])).toEqual({ bad: true, warn: false, ok: false, unknown: false });
+    expect(allergenStatus(PRODS[1], ['gluten'])).toEqual({ bad: true, warn: false, ok: false, unknown: false });
   });
 
   it('only traces of an excluded allergen → warn', () => {
-    expect(allergenStatus(PRODS[0], ['noix'])).toEqual({ bad: false, warn: true, ok: false });
-    expect(allergenStatus(PRODS[2], ['gluten'])).toEqual({ bad: false, warn: true, ok: false });
+    expect(allergenStatus(PRODS[0], ['noix'])).toEqual({ bad: false, warn: true, ok: false, unknown: false });
+    expect(allergenStatus(PRODS[2], ['gluten'])).toEqual({ bad: false, warn: true, ok: false, unknown: false });
   });
 
   it('nothing excluded present → ok', () => {
-    expect(allergenStatus(PRODS[3], ['gluten', 'lait', 'noix'])).toEqual({ bad: false, warn: false, ok: true });
-    expect(allergenStatus(PRODS[1], ['lait'])).toEqual({ bad: false, warn: false, ok: true });
+    expect(allergenStatus(PRODS[3], ['gluten', 'lait', 'noix'])).toEqual({ bad: false, warn: false, ok: true, unknown: false });
+    expect(allergenStatus(PRODS[1], ['lait'])).toEqual({ bad: false, warn: false, ok: true, unknown: false });
   });
 
   it('multi-selection: any excluded allergen counts', () => {
     // traces of gluten + nothing for milk → warn
-    expect(allergenStatus(PRODS[2], ['lait', 'gluten'])).toEqual({ bad: false, warn: true, ok: false });
+    expect(allergenStatus(PRODS[2], ['lait', 'gluten'])).toEqual({ bad: false, warn: true, ok: false, unknown: false });
     // contains gluten even though milk is absent → bad
-    expect(allergenStatus(PRODS[1], ['lait', 'gluten'])).toEqual({ bad: true, warn: false, ok: false });
+    expect(allergenStatus(PRODS[1], ['lait', 'gluten'])).toEqual({ bad: true, warn: false, ok: false, unknown: false });
   });
 
   it('allergens outside the selection are ignored', () => {
-    expect(allergenStatus(PRODS[0], ['soja'])).toEqual({ bad: false, warn: false, ok: true });
+    expect(allergenStatus(PRODS[0], ['soja'])).toEqual({ bad: false, warn: false, ok: true, unknown: false });
   });
 });
 
@@ -79,9 +79,9 @@ describe('allergenMatrix (fixture)', () => {
   it('cells: contains / traces / checked column', () => {
     const m = allergenMatrix(0, ['noix'], PRODS, ALS);
     expect(m.rows[0].cells).toEqual([
-      { id: 'gluten', contains: true, traces: false, on: false },
-      { id: 'lait', contains: true, traces: false, on: false },
-      { id: 'noix', contains: false, traces: true, on: true },
+      { id: 'gluten', contains: true, traces: false, unknown: false, on: false },
+      { id: 'lait', contains: true, traces: false, unknown: false, on: false },
+      { id: 'noix', contains: false, traces: true, unknown: false, on: true },
     ]);
     expect(m.rows[3].cells.every(c => !c.contains && !c.traces)).toBe(true);
   });
@@ -106,6 +106,58 @@ describe('allergenMatrix (fixture)', () => {
     expect([m.okCount, m.warnCount]).toEqual([0, 0]);
     expect(m.rows.some(r => r.bad || r.warn || r.ok)).toBe(false);
     expect(m.headers.some(h => h.on)).toBe(false);
+  });
+});
+
+describe('unverified BO data (alKnown / trKnown false)', () => {
+  /** No allergen entered yet in the BO (the phase-1 BO book: al [], alKnown false, trKnown false). */
+  const unverified = product('u', { al: [], tr: [], alKnown: false, trKnown: false });
+  /** Partly known: contains gluten, the rest unverified. */
+  const partly = product('g', { al: ['gluten'], alKnown: false, trKnown: false });
+  /** Allergens verified, traces never entered. */
+  const noTraces = product('t', { al: ['lait'], alKnown: true, trKnown: false });
+
+  it('a product whose allergens are unverified is never OK: "à vérifier", with or without a selection', () => {
+    for (const ex of [[], ['gluten'], ['lait', 'noix'], ['soja']]) {
+      expect(allergenStatus(unverified, ex)).toEqual({ bad: false, warn: false, ok: false, unknown: true });
+    }
+  });
+
+  it('…unless it is known to contain an excluded allergen: bad', () => {
+    expect(allergenStatus(partly, ['gluten'])).toEqual({ bad: true, warn: false, ok: false, unknown: false });
+    expect(allergenStatus(partly, ['lait'])).toEqual({ bad: false, warn: false, ok: false, unknown: true });
+  });
+
+  it('traces never entered: at most "traces", never OK', () => {
+    expect(allergenStatus(noTraces, ['gluten'])).toEqual({ bad: false, warn: true, ok: false, unknown: false });
+    expect(allergenStatus(noTraces, ['lait'])).toEqual({ bad: true, warn: false, ok: false, unknown: false });
+    expect(allergenStatus(noTraces, [])).toEqual({ bad: false, warn: false, ok: false, unknown: false });
+  });
+
+  it('absent flags (the sample) keep the prototype rules', () => {
+    expect(allergenStatus(product('s', { al: [], tr: [] }), ['gluten'])).toEqual({ bad: false, warn: false, ok: true, unknown: false });
+  });
+
+  it('matrix: "?" cells instead of empty ones, counted apart, never in the OK count', () => {
+    const m = allergenMatrix(0, ['noix'], [...PRODS, unverified, partly], ALS);
+    expect(m.rows.map(r => [r.id, r.ok, r.warn, r.bad, r.unknown])).toEqual([
+      ['a', false, true, false, false],
+      ['b', true, false, false, false],
+      ['c', true, false, false, false],
+      ['d', true, false, false, false],
+      ['u', false, false, false, true],
+      ['g', false, false, false, true],
+    ]);
+    expect([m.okCount, m.warnCount, m.unknownCount]).toEqual([3, 1, 2]);
+    expect(m.rows[4].cells.map(c => c.unknown)).toEqual([true, true, true]);
+    // what is known stays shown: contains gluten, "?" elsewhere
+    expect(m.rows[5].cells.map(c => [c.contains, c.unknown])).toEqual([[true, false], [false, true], [false, true]]);
+    // verified products never get a "?"
+    expect(m.rows.slice(0, 4).every(r => r.cells.every(c => !c.unknown))).toBe(true);
+  });
+
+  it('the sample book has no unverified product', () => {
+    expect(allergenMatrix(0, ['gluten']).unknownCount).toBe(0);
   });
 });
 
