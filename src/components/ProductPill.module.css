@@ -21,6 +21,11 @@
   mix-blend-mode: multiply;
 }
 
+/* A BO photo, cropped to a circle that follows the pill's rounded end. */
+.round {
+  border-radius: 50%;
+}
+
 .name {
   color: var(--color-text);
   font-weight: 500;

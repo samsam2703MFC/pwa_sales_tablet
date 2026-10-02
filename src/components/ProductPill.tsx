@@ -3,7 +3,7 @@ import { useApp } from '../state/store';
 import s from './ProductPill.module.css';
 
 /**
- * "Puce-produit": rounded pill with the illustration, name and (optionally) price.
+ * "Puce-produit": rounded pill with the illustration (a BO photo: in a circle), name and (optionally) price.
  * Opens the product sheet (pushing the navigation stack when already in a sheet).
  *
  * Sizes, as in the prototype:
@@ -25,7 +25,7 @@ export function ProductPill({ p, size = 'lg', price = true, hover = false }: {
       className={`${s.pill} ${s[size]}${hover ? ' ' + s.hover : ''}`}
       onClick={() => actions.openProduct(p.id)}
     >
-      <img src={p.img} alt="" loading="lazy" decoding="async" className={s.img} />
+      <img src={p.img} alt="" loading="lazy" decoding="async" className={p.photo ? `${s.img} ${s.round} photo` : s.img} />
       <span className={s.name}>{p.name}</span>
       {price && <span className={s.price}>{p.price}</span>}
     </button>

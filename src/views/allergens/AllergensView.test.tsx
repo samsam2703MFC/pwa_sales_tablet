@@ -38,6 +38,15 @@ describe('AllergensView', () => {
     expect(screen.queryByText('OK')).toBeNull();
   });
 
+  it('each chip and each column head shows the allergen pictogram (decorative: names unchanged)', () => {
+    renderAl(0);
+    const chips = within(screen.getByRole('group', { name: 'Le client est allergique à :' })).getAllByRole('button');
+    expect(chips.every(b => b.querySelector('svg[aria-hidden="true"]'))).toBe(true);
+    expect(chip('Gluten').textContent).toBe('Gluten');
+    const heads = within(screen.getByRole('table')).getAllByRole('columnheader').slice(2);
+    expect(heads.every(h => h.querySelector('svg[aria-hidden="true"]'))).toBe(true);
+  });
+
   it('table semantics: 16 column headers (named), one row per product', () => {
     renderAl(0);
     // the horizontally scrolling card is keyboard-reachable

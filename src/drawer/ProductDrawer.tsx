@@ -3,6 +3,7 @@ import { PillRow, ProductPill } from '../components/ProductPill';
 import { PRODUCTS } from '../lib/catalog';
 import { useApp } from '../state/store';
 import { backName, isCloseSwipe, sheetVM, type AllergenState } from './drawer.logic';
+import { AllergenIcon } from '../components/AllergenIcon';
 import s from './ProductDrawer.module.css';
 
 /** Accessible name prefix of the "← previous product" button (the arrow itself is decorative). */
@@ -122,7 +123,8 @@ function Sheet() {
         <div className={s.body}>
           <div className={s.hero}>
             <div className={s.tile}>
-              <img src={vm.img} alt="" className={s.tileImg} />
+              {/* Keyed by picture: a fallback (data-fallback) never carries over to the next product. */}
+              <img key={vm.img} src={vm.img} alt="" className={vm.photo ? `${s.tileImg} ${s.tilePhoto} photo` : s.tileImg} />
             </div>
             <div className={s.heroText}>
               <h2 id={titleId} className={s.name}>{vm.name}</h2>
@@ -172,6 +174,7 @@ function Sheet() {
               <ul className={s.alGrid}>
                 {vm.grid.map(a => (
                   <li key={a.id} className={`${s.al} ${TILE[a.state]}`}>
+                    <AllergenIcon id={a.id} size={18} stroke={1.75} className={s.alIcon} />
                     {a.n}
                     {a.state !== 'absent' && (
                       <span className="sr-only">: {a.state === 'contains' ? L.contains : L.traces}</span>

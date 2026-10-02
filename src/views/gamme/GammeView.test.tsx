@@ -34,6 +34,13 @@ describe('GammeView', () => {
     expect(vegan().getAttribute('aria-pressed')).toBe('false');
   });
 
+  it('a card shows each allergen code with its pictogram', () => {
+    renderGamme(0);
+    const card = screen.getByRole('button', { name: /^Croissant pur beurre/ });
+    const codes = [...card.querySelectorAll('svg[aria-hidden="true"]')].map(svg => svg.parentElement!.textContent);
+    expect(codes).toEqual(['GLU', 'LAI', 'ŒUF']);
+  });
+
   it('renders in NL', () => {
     renderGamme(1);
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Het assortiment');

@@ -162,6 +162,13 @@
   mix-blend-mode: multiply;
 }
 
+/* A BO photo fills the whole square tile. */
+.tilePhoto {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
 .heroText {
   display: flex;
   flex-direction: column;
@@ -322,6 +329,10 @@
   padding: 0 10px;
   border-radius: var(--radius-md);
   font-size: 14px;
+}
+
+.alIcon {
+  flex: none;
 }
 
 .contains {

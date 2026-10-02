@@ -42,6 +42,22 @@
   mix-blend-mode: multiply;
 }
 
+/* BO book: square picture area; a photo fills it, an illustration takes the middle half. */
+.square {
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+.square .img {
+  width: 50%;
+  height: 50%;
+}
+.square .img:global(.photo) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
 .badgesL {
   position: absolute;
   top: 8px;
@@ -120,6 +136,9 @@
 }
 
 .code {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.04em;
@@ -127,6 +146,10 @@
   border-radius: 4px;
   background: var(--color-code-bg);
   color: var(--color-primary);
+}
+
+.codeIcon {
+  flex: none;
 }
 
 /* Unverified allergen list (BO data). */

@@ -97,7 +97,7 @@ export function StatsView() {
             {vm.top.map(t => (
               <button key={t.product.id} type="button" className={s.topItem} onClick={() => actions.openProduct(t.product.id)}>
                 <span className={s.topRank}>{t.rank}</span>
-                <img src={t.product.img} alt="" loading="lazy" decoding="async" className={s.topImg} />
+                <img src={t.product.img} alt="" loading="lazy" decoding="async" className={t.product.photo ? `${s.topImg} ${s.topImgPhoto} photo` : s.topImg} />
                 <span className={s.topName}>{t.product.name}</span>
                 <span className={s.topQty}>{t.qtyLabel}</span>
               </button>

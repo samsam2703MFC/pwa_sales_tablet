@@ -59,6 +59,7 @@ describe('app on a BO book', () => {
     const pills = within(season).getAllByRole('button');
     expect(pills.map(b => b.textContent)).toEqual(['Couque suisse aux raisins1,60 €']);
     expect(pills[0].querySelector('img')!.getAttribute('src')).toBe('http://bo.test/consulant_bo/uploads/plano/panel/1610042.png');
+    expect(pills[0].querySelector('img')!.classList.contains('photo')).toBe(true); // cropped to a circle
     // Objectives: shown with a BO book, from GET <API>/tablette/objectifs.
     expect(within(main()).getByText('Objectifs')).toBeTruthy();
     expect(await within(main()).findByText(/^4\s311 € \/ 6\s000 €$/)).toBeTruthy();
@@ -74,6 +75,10 @@ describe('app on a BO book', () => {
     expect(card.querySelector('img')!.getAttribute('src')).toBe('/img/placeholder.svg');
     expect(within(card).getByText("À vérifier sur l'étiquette")).toBeTruthy();
     expect(within(main()).getAllByText("À vérifier sur l'étiquette")).toHaveLength(4);
+    // A BO photo fills the square picture area (global class "photo"); the placeholder does not.
+    expect(card.querySelector('img')!.classList.contains('photo')).toBe(false);
+    const couque = within(main()).getByRole('button', { name: /Couque suisse aux raisins/ });
+    expect(couque.querySelector('img')!.classList.contains('photo')).toBe(true);
   });
 
   it('product sheet: allergens to check on the label with the BO text, no empty block', () => {

@@ -86,6 +86,12 @@
   object-fit: contain;
   mix-blend-mode: multiply;
 }
+/* A BO photo: a square that fits the tile, rounded. */
+.tileImgPhoto {
+  height: 44px;
+  margin: 4px 0;
+  border-radius: 8px;
+}
 
 .tileName {
   font-size: 12px;
