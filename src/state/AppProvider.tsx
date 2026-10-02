@@ -22,6 +22,7 @@ export function AppProvider({ children, initial }: { children: ReactNode; initia
     toggleAllergen: id => set(transitions.toggleAllergen(id)),
     resetEx: () => set({ ex: [] }),
     setFaqCat: id => set(transitions.setFaqCat(id)),
+    setFaqSub: id => set(transitions.setFaqSub(id)),
     toggleFaq: i => set(transitions.toggleFaq(i)),
     openProduct: id => set(transitions.openProduct(id)),
     closeProduct: () => set(transitions.closeProduct()),

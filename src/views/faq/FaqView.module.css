@@ -4,6 +4,13 @@
   gap: 22px;
 }
 
+/* Category chips, then the sub-category row just under them. */
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .list {
   display: flex;
   flex-direction: column;

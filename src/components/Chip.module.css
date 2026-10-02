@@ -29,3 +29,14 @@
   color: #fff;
   font-weight: 500;
 }
+
+/* Second row: smaller, and its active chip is outlined rather than filled, under the filled one. */
+.sm {
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+.sm.active {
+  background: var(--color-col-active);
+  color: var(--color-primary);
+}

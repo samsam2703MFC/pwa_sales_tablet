@@ -77,6 +77,26 @@ describe('validateBook', () => {
     ]);
   });
 
+  it('reports FAQ sub-categories that are unknown, of another category, or in an unknown category', () => {
+    const b = withChange(b => {
+      b.faq[2].sub = 'zz';
+      b.faq[1].sub = 'qa'; // qa belongs to q1, the question is in q2
+      b.faqSubs[1].cat = 'q9';
+    });
+    expect(validateBook(b)).toEqual([
+      'faqSubs.qb.cat : id inconnu « q9 »',
+      'faq[1].sub : « qa » appartient à « q1 », pas à « q2 »',
+      'faq[2].sub : id inconnu « zz »',
+    ]);
+  });
+
+  it('reports duplicate and reserved FAQ sub-category ids', () => {
+    const b = withChange(b => {
+      b.faqSubs.push({ id: 'qa', cat: 'q1', n: ['x', 'x'] }, { id: 'all', cat: 'q1', n: ['Tout', 'Alles'] });
+    });
+    expect(validateBook(b)).toEqual(['faqSubs : id en double « qa »', 'faqSubs : « all » est réservé (chip « Tout »)']);
+  });
+
   it('reports duplicate and reserved ids', () => {
     const b = withChange(b => {
       b.products.push({ ...product(b, 'p5') });

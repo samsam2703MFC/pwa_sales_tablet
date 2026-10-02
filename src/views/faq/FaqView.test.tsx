@@ -18,7 +18,8 @@ const renderFaq = (lang: Lang = 0, initial: Partial<AppState> = {}) =>
     </AppProvider>,
   );
 
-const chips = () => within(screen.getByRole('group')).getAllByRole('button');
+const chips = () => within(screen.getAllByRole('group')[0]).getAllByRole('button');
+const subChips = () => within(screen.getByRole('group', { name: 'Produits' })).getAllByRole('button');
 /** Accordion header buttons (inside the H2s). */
 const questions = () => screen.getAllByRole('heading', { level: 2 }).map(h => within(h).getByRole('button'));
 const expanded = () => questions().map(b => b.getAttribute('aria-expanded'));
@@ -34,8 +35,9 @@ describe('FaqView', () => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Questions fréquentes');
     expect(chips().map(b => b.textContent)).toEqual(['Tout', 'Allergies & régimes', 'Produits', 'Commandes', 'Services & paiement']);
     expect(chips()[0].getAttribute('aria-pressed')).toBe('true');
-    expect(questions()).toHaveLength(12);
-    expect(expanded()).toEqual(['true', ...Array(11).fill('false')]);
+    expect(screen.getAllByRole('group')).toHaveLength(1); // no second row under "Tout"
+    expect(questions()).toHaveLength(31);
+    expect(expanded()).toEqual(['true', ...Array(30).fill('false')]);
     // the "+/−" sign is decorative: the accessible name is the question only
     expect(questions()[0].textContent).toBe('Avez-vous des produits sans gluten ?−');
     expect(q('Avez-vous des produits sans gluten ?')).toBe(questions()[0]);
@@ -67,7 +69,7 @@ describe('FaqView', () => {
     renderFaq(0);
     fireEvent.click(q('Quels produits sont vegan ?'));
     expect(state().faqOpen).toBe(2);
-    expect(expanded()).toEqual(['false', 'false', 'true', ...Array(9).fill('false')]);
+    expect(expanded()).toEqual(['false', 'false', 'true', ...Array(28).fill('false')]);
     fireEvent.click(q('Quels produits sont vegan ?'));
     expect(state().faqOpen).toBe(-1);
     expect(expanded().every(e => e === 'false')).toBe(true);
@@ -94,10 +96,42 @@ describe('FaqView', () => {
     ]);
     expect(expanded()).toEqual(['false', 'false', 'false']);
     fireEvent.click(q('Peut-on annuler une commande ?'));
-    expect(state().faqOpen).toBe(8);
+    expect(state().faqOpen).toBe(27);
     fireEvent.click(screen.getByRole('button', { name: 'Tout' }));
-    expect(questions()).toHaveLength(12);
+    expect(questions()).toHaveLength(31);
     expect(state().faqOpen).toBe(-1);
+  });
+
+  it('"Produits" shows the product families as a second row, which filters its questions', () => {
+    renderFaq(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Produits' }));
+    expect(subChips().map(b => b.textContent)).toEqual([
+      'Tout', 'Viennoiserie', 'Boulangerie', 'Pâtisserie', 'Tartes', 'Quiches', 'Traiteur', 'Biscuiterie', 'Épicerie', 'Fêtes & Occasions',
+    ]);
+    expect(subChips()[0].getAttribute('aria-pressed')).toBe('true');
+    expect(questions()).toHaveLength(22);
+    fireEvent.click(q('Pouvez-vous trancher le pain ?'));
+    fireEvent.click(within(screen.getByRole('group', { name: 'Produits' })).getByRole('button', { name: 'Tartes' }));
+    expect(state()).toMatchObject({ faqCat: 'prod', faqSub: 'tartes', faqOpen: -1 });
+    expect(subChips()[4].getAttribute('aria-pressed')).toBe('true');
+    expect(questions().map(b => b.firstChild?.textContent)).toEqual([
+      'Peut-on acheter une tarte en morceaux ?',
+      'Peut-on commander une tarte entière ?',
+    ]);
+    // another category: the second row goes, and coming back starts on its "Tout"
+    fireEvent.click(screen.getByRole('button', { name: 'Commandes' }));
+    expect(screen.getAllByRole('group')).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Produits' }));
+    expect(state().faqSub).toBe('all');
+    expect(questions()).toHaveLength(22);
+  });
+
+  it('the families in NL', () => {
+    renderFaq(1, { faqCat: 'prod' });
+    const row = screen.getByRole('group', { name: 'Producten' });
+    expect(within(row).getAllByRole('button').map(b => b.textContent).slice(0, 4)).toEqual(['Alles', 'Viennoiserie', 'Brood', 'Gebak']);
+    fireEvent.click(within(row).getByRole('button', { name: 'Brood' }));
+    expect(questions()[2].firstChild?.textContent).toBe('Hoe bewaar ik het brood?');
   });
 
   it('a linked product pill opens the product sheet', () => {

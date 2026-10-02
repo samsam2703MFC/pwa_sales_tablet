@@ -3,11 +3,12 @@ import { Chip, ChipRow } from '../../components/Chip';
 import { PageTitle } from '../../components/PageTitle';
 import { PillRow, ProductPill } from '../../components/ProductPill';
 import { useApp } from '../../state/store';
-import { faqChips, faqItems } from './faq.logic';
+import { faqChips, faqItems, faqSubChips } from './faq.logic';
 import s from './FaqView.module.css';
 
 /**
- * FAQ clients: category chips (picking one closes the open answer), then an accordion
+ * FAQ clients: category chips (picking one closes the open answer), a second row of smaller
+ * chips when the category has sub-categories (the product families under "Produits"), then an accordion
  * where only one answer is open at a time — the first question starts open.
  * Answers may list the linked products as pills that open the product sheet.
  */
@@ -15,18 +16,32 @@ export function FaqView() {
   const { state, lang, L, actions } = useApp();
   const uid = useId();
   const chips = useMemo(() => faqChips(lang), [lang]);
-  const items = useMemo(() => faqItems(state.faqCat, state.faqOpen, lang), [state.faqCat, state.faqOpen, lang]);
+  const subs = useMemo(() => faqSubChips(state.faqCat, lang), [state.faqCat, lang]);
+  const sub = subs.some(c => c.id === state.faqSub) ? state.faqSub : 'all';
+  const items = useMemo(() => faqItems(state.faqCat, sub, state.faqOpen, lang), [state.faqCat, sub, state.faqOpen, lang]);
+  const catLabel = chips.find(c => c.id === state.faqCat)?.label;
 
   return (
     <section className={s.page}>
       <PageTitle>{L.faqTitle}</PageTitle>
-      <ChipRow label={L.faqTitle}>
-        {chips.map(c => (
-          <Chip key={c.id} active={state.faqCat === c.id} onClick={() => actions.setFaqCat(c.id)}>
-            {c.label}
-          </Chip>
-        ))}
-      </ChipRow>
+      <div className={s.filters}>
+        <ChipRow label={L.faqTitle}>
+          {chips.map(c => (
+            <Chip key={c.id} active={state.faqCat === c.id} onClick={() => actions.setFaqCat(c.id)}>
+              {c.label}
+            </Chip>
+          ))}
+        </ChipRow>
+        {subs.length > 0 && (
+          <ChipRow label={catLabel}>
+            {subs.map(c => (
+              <Chip key={c.id} size="sm" active={sub === c.id} onClick={() => actions.setFaqSub(c.id)}>
+                {c.label}
+              </Chip>
+            ))}
+          </ChipRow>
+        )}
+      </div>
       <div className={s.list}>
         {items.map(f => {
           const panel = `${uid}-a${f.index}`;

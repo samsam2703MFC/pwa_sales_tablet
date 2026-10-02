@@ -10,10 +10,14 @@ export function ChipRow({ children, label }: { children: ReactNode; label?: stri
   );
 }
 
-/** Pill filter chip, 52 px high. Active = Ruby Red fill. */
-export function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+/**
+ * Pill filter chip, 52 px high. Active = Ruby Red fill.
+ * `size="sm"`: 44 px, for a second row under a first one (active = Ruby Red outline on a pink tint).
+ */
+export function Chip({ active, onClick, children, size = 'md' }: { active: boolean; onClick: () => void; children: ReactNode; size?: 'md' | 'sm' }) {
+  const cls = [s.chip, size === 'sm' && s.sm, active && s.active].filter(Boolean).join(' ');
   return (
-    <button type="button" className={active ? `${s.chip} ${s.active}` : s.chip} aria-pressed={active} onClick={onClick}>
+    <button type="button" className={cls} aria-pressed={active} onClick={onClick}>
       {children}
     </button>
   );

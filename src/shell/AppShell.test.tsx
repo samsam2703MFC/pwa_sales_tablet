@@ -130,7 +130,7 @@ describe('AppShell — landscape (≥ 1000 px)', () => {
     expect(status.textContent).toBe('');
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'cro' } });
     expect(resultsStatus()).toBe(status);
-    expect(status.textContent).toBe('9 produits, 1 question');
+    expect(status.textContent).toBe('9 produits, 4 questions');
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'gluten' } });
     expect(status.textContent).toMatch(/^\d+ produits, \d+ questions?$/);
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'croz' } });
@@ -142,7 +142,7 @@ describe('AppShell — landscape (≥ 1000 px)', () => {
   it('announces the results in NL', () => {
     renderShell(1280, 1);
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'cro' } });
-    expect(resultsStatus().textContent).toBe('9 producten, 1 vraag');
+    expect(resultsStatus().textContent).toBe('9 producten, 4 vragen');
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'croz' } });
     expect(resultsStatus().textContent).toBe('Geen resultaten.');
   });
