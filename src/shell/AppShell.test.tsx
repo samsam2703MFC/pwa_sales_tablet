@@ -246,7 +246,7 @@ describe('AppShell — portrait (< 1000 px)', () => {
     expect(document.activeElement).toBe(dialog);
     expect(btn('Plus').getAttribute('aria-expanded')).toBe('true');
     expect(within(dialog).getAllByRole('button').map(b => b.textContent))
-      .toEqual(['Saisons', 'Vendre plus', 'Services', 'Conservation', 'Statistiques', 'Les bases', 'Onboarding']);
+      .toEqual(['Saisons', 'Vendre plus', 'Services', 'Conservation', 'Statistiques', 'Objectifs', 'Remarques clients', 'Les bases', 'Onboarding']);
     fireEvent.click(within(dialog).getByRole('button', { name: 'Saisons' }));
     expect(state()).toMatchObject({ view: 'saisons', more: false });
     expect(screen.queryByRole('dialog')).toBeNull();

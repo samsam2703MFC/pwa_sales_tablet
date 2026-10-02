@@ -16,7 +16,7 @@ describe('isTabActive', () => {
   });
 
   it('highlights "Plus" for views without their own tab', () => {
-    for (const v of ['saisons', 'ventes', 'svc', 'cons', 'stats', 'bases', 'onb'] as const) {
+    for (const v of ['saisons', 'ventes', 'svc', 'cons', 'stats', 'obj', 'rem', 'bases', 'onb'] as const) {
       expect(isTabActive('more', v, false)).toBe(true);
       expect(isTabActive('home', v, false)).toBe(false);
     }
@@ -36,7 +36,12 @@ describe('moreGroups', () => {
   it('lists the sections without a tab, with their images ("Les bases" before "Onboarding")', () => {
     const fr = moreGroups(0);
     expect(fr.map(g => g.title)).toEqual(['Vente', 'Formation']);
-    expect(fr[0].items.map(i => i.id)).toEqual(['saisons', 'ventes', 'svc', 'cons', 'stats']);
+    expect(fr[0].items.map(i => i.id)).toEqual(['saisons', 'ventes', 'svc', 'cons', 'stats', 'obj', 'rem']);
+    // the targets and the customer remarks left the home page for their own sections
+    expect(fr[0].items.slice(5)).toEqual([
+      { id: 'obj', label: 'Objectifs', img: 'img/objectifs.svg' },
+      { id: 'rem', label: 'Remarques clients', img: 'img/s/valentines-day-range.png' },
+    ]);
     expect(fr[0].items[0]).toEqual({ id: 'saisons', label: 'Saisons', img: 'img/s/autumn-range.png' });
     expect(fr[1].items).toEqual([
       { id: 'bases', label: 'Les bases', img: 'img/onb/phone-orders.png' },
@@ -47,7 +52,7 @@ describe('moreGroups', () => {
   it('translates labels to NL', () => {
     const nl = moreGroups(1);
     expect(nl.map(g => g.title)).toEqual(['Verkoop', 'Opleiding']);
-    expect(nl[0].items.map(i => i.label)).toEqual(['Seizoenen', 'Meer verkopen', 'Diensten', 'Bewaring', 'Statistieken']);
+    expect(nl[0].items.map(i => i.label)).toEqual(['Seizoenen', 'Meer verkopen', 'Diensten', 'Bewaring', 'Statistieken', 'Doelen', 'Klantenopmerkingen']);
     expect(nl[1].items.map(i => i.label)).toEqual(['De basis', 'Onboarding']);
   });
 

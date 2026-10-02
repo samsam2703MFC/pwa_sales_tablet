@@ -12,6 +12,8 @@ import { ConservationView } from './views/conservation/ConservationView';
 import { StatsView } from './views/stats/StatsView';
 import { OnboardingView } from './views/onboarding/OnboardingView';
 import { BasesView } from './views/bases/BasesView';
+import { ObjectifsView } from './views/objectifs/ObjectifsView';
+import { RemarquesView } from './views/remarques/RemarquesView';
 
 /** The page content: search results as soon as there is a query, else the current section. */
 function CurrentView() {
@@ -27,6 +29,8 @@ function CurrentView() {
     case 'svc': return <ServicesView />;
     case 'cons': return <ConservationView />;
     case 'stats': return <StatsView />;
+    case 'obj': return <ObjectifsView />;
+    case 'rem': return <RemarquesView />;
     case 'bases': return <BasesView />;
     case 'onb': return <OnboardingView />;
   }

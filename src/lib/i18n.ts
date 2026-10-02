@@ -5,7 +5,7 @@ const LABELS = [
   {
     book: 'Book vendeuses', search: 'Rechercher un produit, un ingrédient, une question…', clear: 'Effacer',
     sample: "Données d'exemple — à remplacer par les fiches produit officielles.", hello: 'Bonjour !',
-    homeIntro: "Ce qu'il faut savoir aujourd'hui en boutique.", now: 'En ce moment', next: 'À préparer', best: 'Les plus vendus', tipL: 'Consigne',
+    homeIntro: "Ce qu'il faut savoir aujourd'hui en boutique.", curRange: 'La gamme actuelle', now: 'En ce moment', next: 'À préparer', best: 'Les plus vendus', tipL: 'Consigne',
     top: 'Top vente', vege: 'Végétarien', vegeS: 'VÉGÉ', gammeTitle: 'La gamme', all: 'Tout',
     say: 'À dire au client', ingr: 'Ingrédients', alg: 'Allergènes', contains: 'Contient', traces: 'Traces possibles', trS: 'Traces',
     keep: 'Conservation', keepNone: 'Non renseignée', noSeasonNow: 'Aucune saison en ce moment.', dlc: 'Durée', also: 'Proposez aussi', allYear: "Toute l'année", close: 'Fermer',
@@ -24,7 +24,7 @@ const LABELS = [
   {
     book: 'Verkoopsboek', search: 'Zoek een product, ingrediënt, vraag…', clear: 'Wissen',
     sample: 'Voorbeeldgegevens — te vervangen door de officiële productfiches.', hello: 'Goedendag!',
-    homeIntro: 'Wat u vandaag moet weten in de winkel.', now: 'Nu', next: 'Voor te bereiden', best: 'Topverkopers', tipL: 'Richtlijn',
+    homeIntro: 'Wat u vandaag moet weten in de winkel.', curRange: 'Het huidige assortiment', now: 'Nu', next: 'Voor te bereiden', best: 'Topverkopers', tipL: 'Richtlijn',
     top: 'Topper', vege: 'Vegetarisch', vegeS: 'VEGGIE', gammeTitle: 'Het assortiment', all: 'Alles',
     say: 'Tegen de klant', ingr: 'Ingrediënten', alg: 'Allergenen', contains: 'Bevat', traces: 'Mogelijke sporen', trS: 'Sporen',
     keep: 'Bewaring', keepNone: 'Niet ingevuld', noSeasonNow: 'Geen seizoen op dit moment.', dlc: 'Houdbaar', also: 'Stel ook voor', allYear: 'Het hele jaar', close: 'Sluiten',
@@ -73,15 +73,35 @@ const OBJ_LABELS = pair(
     title: 'Objectifs', ca: "Chiffre d'affaires", cross: 'Vente additionnelle', week: 'Cette semaine', month: 'Ce mois',
     obj: 'Objectif', expected: 'attendu à ce jour', reached: 'Atteint', toGo: 'À atteindre', ahead: 'En avance', behind: 'En retard',
     noTarget: "Pas d'objectif", noData: 'Pas encore de chiffres', tickets: 'tickets', perTicket: 'articles par ticket',
+    sampleNote: "Les objectifs viennent du back-office : ils s'affichent quand la tablette est reliée à un magasin.",
   },
   {
     title: 'Doelen', ca: 'Omzet', cross: 'Bijverkoop', week: 'Deze week', month: 'Deze maand',
     obj: 'Doel', expected: 'verwacht tot vandaag', reached: 'Gehaald', toGo: 'Nog te gaan', ahead: 'Voor op schema', behind: 'Achter op schema',
     noTarget: 'Geen doel', noData: 'Nog geen cijfers', tickets: 'tickets', perTicket: 'artikelen per ticket',
+    sampleNote: 'De doelen komen uit de back-office: ze verschijnen wanneer de tablet aan een winkel gekoppeld is.',
   },
 );
 export type ObjLabels = (typeof OBJ_LABELS)[0];
 export const objLabels = (lang: Lang): ObjLabels => OBJ_LABELS[lang];
+
+/** "Les bundles de la semaine" (home page, src/data/bundles.ts). */
+const BUNDLE_LABELS = pair(
+  {
+    title: 'Les bundles de la semaine', from: 'Dès le', today: "Aujourd'hui", only: 'Seulement à', colon: ' : ',
+    period: (a: string, b: string) => `Du ${a} au ${b}`, bundle: 'Bundle',
+    days: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+    channels: { cc: 'Click & collect', delivery: 'Livraison' },
+  },
+  {
+    title: 'De bundels van de week', from: 'Vanaf', today: 'Vandaag', only: 'Alleen in', colon: ': ',
+    period: (a: string, b: string) => `Van ${a} tot ${b}`, bundle: 'Bundel',
+    days: ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'],
+    channels: { cc: 'Click & collect', delivery: 'Levering' },
+  },
+);
+export type BundleLabels = (typeof BUNDLE_LABELS)[0];
+export const bundleLabels = (lang: Lang): BundleLabels => BUNDLE_LABELS[lang];
 
 /** Customer remark form of the home page (sent to the BO, POST /tablette/remarques). */
 const REMARK_LABELS = pair(
@@ -125,7 +145,7 @@ const ONB_LABELS = pair(
 export type OnbLabels = (typeof ONB_LABELS)[0];
 export const onbLabels = (lang: Lang): OnbLabels => ONB_LABELS[lang];
 
-export type View = 'home' | 'gamme' | 'saisons' | 'al' | 'ventes' | 'faq' | 'svc' | 'cons' | 'stats' | 'bases' | 'onb';
+export type View = 'home' | 'gamme' | 'saisons' | 'al' | 'ventes' | 'faq' | 'svc' | 'cons' | 'stats' | 'obj' | 'rem' | 'bases' | 'onb';
 export type NavGroup = 'v' | 'f';
 
 /** Navigation entries: [id, FR, NL, group]. Order = sidebar order. */
@@ -139,6 +159,8 @@ export const NAV: readonly (readonly [View, string, string, NavGroup])[] = [
   ['svc', 'Services', 'Diensten', 'v'],
   ['cons', 'Conservation', 'Bewaring', 'v'],
   ['stats', 'Statistiques', 'Statistieken', 'v'],
+  ['obj', 'Objectifs', 'Doelen', 'v'],
+  ['rem', 'Remarques clients', 'Klantenopmerkingen', 'v'],
   ['bases', 'Les bases', 'De basis', 'f'],
   ['onb', 'Onboarding', 'Onboarding', 'f'],
 ];

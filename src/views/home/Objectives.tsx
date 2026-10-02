@@ -16,16 +16,17 @@ import s from './Objectives.module.css';
  * The shop's targets, from the BO: revenue and cross-sell (items per ticket), each for the
  * current week and month, with a gauge (red when reached or ahead of plan, amber otherwise) and, for revenue,
  * a tick where today's expected value sits. The last answer kept on the device shows at once;
- * a fresh one is asked when the home page opens. Hidden with the bundled sample data.
+ * a fresh one is asked when the block opens (page « Objectifs »). Hidden with the bundled sample
+ * data. `eyebrow`: its own "Objectifs" title (off under a page title).
  */
-export function ObjectivesBlock() {
+export function ObjectivesBlock({ eyebrow = true }: { eyebrow?: boolean }) {
   const { lang } = useApp();
   const obj = useObjectives(BOOK_SOURCE.kind !== 'sample');
   if (BOOK_SOURCE.kind === 'sample') return null;
   const O = objLabels(lang);
   return (
     <div className={s.block}>
-      <span className={s.eyebrow}>{O.title}</span>
+      {eyebrow && <span className={s.eyebrow}>{O.title}</span>}
       <div className={s.grid}>
         <div className={s.card}>
           <h2 className={s.cardTitle}>{O.ca}</h2>

@@ -38,6 +38,8 @@ const MORE: readonly (readonly [NavGroup, readonly (readonly [View, string])[]])
     ['svc', 'img/svc/click-collect.png'],
     ['cons', 'img/s/winter-range.png'],
     ['stats', 'img/svc/b2b.png'],
+    ['obj', 'img/objectifs.svg'],
+    ['rem', 'img/s/valentines-day-range.png'],
   ]],
   ['f', [['bases', 'img/onb/phone-orders.png'], ['onb', 'img/onb/croissant.png']]],
 ];

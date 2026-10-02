@@ -110,7 +110,7 @@ async function mockRemarks(page: Page) {
   return bo;
 }
 
-/** The customer remark form of the home page. */
+/** The customer remark form (page « Remarques clients »). */
 const remarkForm = (page: Page) => page.getByRole('form', { name: "Remarque d'un client" });
 
 /** Natural width of the first image whose URL ends with `suffix` inside `scope`, once loaded. */
@@ -135,9 +135,11 @@ test.describe('data from the back-office', () => {
     // the shop is remembered for the installed app, which opens without ?shop=
     expect(await page.evaluate(() => localStorage.getItem('bv.shop'))).toBe('4');
 
-    // Home: the shop's targets from the BO (gauges are covered below)
+    // Home: the current range and the bundles of the week, nothing else (targets: page « Objectifs », below)
     const main = page.getByRole('main');
-    await expect(main.getByText(amount('4 311 € / 6 000 €'))).toBeVisible();
+    // (the bundles follow the device clock: shown until 15 December 2026, see the unit tests)
+    await expect(main.getByRole('heading', { level: 2 }).first()).toHaveText('La gamme actuelle');
+    await expect(main.getByRole('form')).toHaveCount(0);
 
     // La gamme: BO categories, photos (thumbnail or panel original), placeholder without photo
     await openSection(page, 'La gamme');
@@ -227,19 +229,20 @@ test.describe('data from the back-office', () => {
     await page.goto('/?shop=4');
     await expect(pageTitle(page, 'Bonjour !')).toBeVisible();
     await expect(page.getByText(/^Données d'exemple/).first()).toBeVisible();
-    // No targets with the sample data: the block is hidden and nothing is asked.
-    await expect(remarkForm(page)).toBeVisible();
-    await expect(page.getByText('Objectifs', { exact: true })).toHaveCount(0);
+    // No targets with the sample data: the page says they come from the BO, nothing is asked.
+    await openSection(page, 'Objectifs');
+    await expect(page.getByText(/^Les objectifs viennent du back-office/)).toBeVisible();
     expect(objectives).toEqual([]);
     await openSection(page, 'La gamme');
     await expect(page.getByRole('main').getByRole('button', { name: /Croissant pur beurre/ }).first()).toBeVisible();
   });
 
-  test('home: the shop\'s targets from the BO, as gauges', async ({ page }) => {
+  test('« Objectifs »: the shop\'s targets from the BO, as gauges', async ({ page }) => {
     await mockBo(page);
     const objectives = await mockObjectives(page);
     await page.goto('/?shop=4');
-    await expect(page.getByText('Objectifs', { exact: true })).toBeVisible();
+    await openSection(page, 'Objectifs');
+    await expect(pageTitle(page, 'Objectifs')).toBeVisible();
     expect(objectives[0]).toMatch(/\/api\/cockpit\/tablette\/objectifs\?shop=4$/);
 
     /** Rows of a card: [period, value, status] and the bar's fill (% of the track). */
@@ -268,7 +271,7 @@ test.describe('data from the back-office', () => {
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('bv.obj') ?? '{}').payload)).toEqual(OBJECTIVES_PAYLOAD);
 
     await page.getByRole('button', { name: 'NL', exact: true }).click();
-    await expect(page.getByText('Doelen', { exact: true })).toBeVisible();
+    await expect(pageTitle(page, 'Doelen')).toBeVisible();
     await expect(page.getByText(amount('4.311 € / 6.000 €'))).toBeVisible();
     await expect(page.getByText('Gehaald · 1.890 tickets', { exact: true })).toBeVisible();
   });
@@ -277,6 +280,7 @@ test.describe('data from the back-office', () => {
     await mockBo(page);
     const remarks = await mockRemarks(page);
     await page.goto('/?shop=4');
+    await openSection(page, 'Remarques clients');
     const form = remarkForm(page);
     const send = form.getByRole('button', { name: 'Envoyer', exact: true });
     await expect(send).toBeDisabled();
@@ -310,6 +314,7 @@ test.describe('data from the back-office', () => {
     await mockBo(page);
     const remarks = await mockRemarks(page);
     await page.goto('/?shop=4');
+    await openSection(page, 'Remarques clients');
     const form = remarkForm(page);
     await expect(form).toBeVisible();
 
@@ -384,7 +389,8 @@ test.describe('data from the back-office, offline', () => {
     bo.up = false;
     await page.reload();
     await expect(source(page)).toHaveText(/^BO · Ixelles · 2 oct\.? 09[:h]12$/);
-    // The home page shows the targets kept on the device.
+    // « Objectifs » shows the targets kept on the device.
+    await openSection(page, 'Objectifs');
     await expect(page.getByRole('main').getByText(amount('4 311 € / 6 000 €'))).toBeVisible();
 
     // The tablet goes offline too.
@@ -393,6 +399,7 @@ test.describe('data from the back-office, offline', () => {
     await page.goto(bo.base);
     await expect(pageTitle(page, 'Bonjour !')).toBeVisible();
     await expect(source(page)).toHaveText(/^Hors ligne · données du 2 oct\.? 09[:h]12$/);
+    await openSection(page, 'Objectifs');
     await expect(page.getByRole('main').getByText(amount('2,05 / 2,00'))).toBeVisible();
     await openSection(page, 'La gamme');
     const main = page.getByRole('main');

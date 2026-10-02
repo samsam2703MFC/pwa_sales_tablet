@@ -10,8 +10,8 @@ export const mainNav = (page: Page) => page.getByRole('navigation');
 
 /**
  * Opens a section: its tab (Accueil, La gamme, Allergènes, FAQ), else its tile in the
- * "Plus" / "Meer" sheet (Saisons, Vendre plus, Services, Conservation, Statistiques, Les bases,
- * Onboarding). Works the same in landscape and portrait.
+ * "Plus" / "Meer" sheet (Saisons, Vendre plus, Services, Conservation, Statistiques, Objectifs,
+ * Remarques clients, Les bases, Onboarding). Works the same in landscape and portrait.
  */
 export async function openSection(page: Page, label: string): Promise<void> {
   const nav = mainNav(page);

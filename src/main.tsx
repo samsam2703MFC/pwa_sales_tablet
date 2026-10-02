@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './styles/global.css';
 import { reloadWhenIdle, watchForUpdates } from './pwa/register';
 import { BOOK, SAMPLE_BOOK, setBook } from './data/book';
+import { fetchObjectives, objectivesUrl } from './data/objectives';
 import { bookUrl, refreshBook, remotePhotos, startBook } from './data/remote';
 import { remarksUrl, startRemarkSync } from './data/remarks';
 import { validateBook } from './data/validate';
@@ -55,7 +56,11 @@ async function boot() {
   // Customer remarks typed while offline leave now, and whenever the network comes back.
   startRemarkSync(remarksUrl(API_ROOT), storage);
 
-  if (source.kind !== 'sample') void warmPhotos(remotePhotos(book));
+  if (source.kind !== 'sample') {
+    void warmPhotos(remotePhotos(book));
+    // The shop's targets, kept on the device: the « Objectifs » page shows them at once, offline too.
+    void fetchObjectives(objectivesUrl(API_ROOT, config.shop), storage);
+  }
 }
 
 void boot();

@@ -117,7 +117,7 @@ test.describe('layout', () => {
     // "Plus" holds the other sections, Formation included ("Les bases", then "Onboarding").
     await tabs.getByRole('button', { name: 'Plus', exact: true }).click();
     const more = page.getByRole('dialog');
-    await expect(more.getByRole('button')).toHaveText(['Saisons', 'Vendre plus', 'Services', 'Conservation', 'Statistiques', 'Les bases', 'Onboarding']);
+    await expect(more.getByRole('button')).toHaveText(['Saisons', 'Vendre plus', 'Services', 'Conservation', 'Statistiques', 'Objectifs', 'Remarques clients', 'Les bases', 'Onboarding']);
     await more.getByRole('button', { name: 'Les bases', exact: true }).click();
     await expect(pageTitle(page, 'Les bases')).toBeVisible();
     await expect(more).toBeHidden();

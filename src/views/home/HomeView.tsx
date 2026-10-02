@@ -3,45 +3,32 @@ import { PillRow, ProductPill } from '../../components/ProductPill';
 import { currentMonth } from '../../lib/date';
 import { useApp } from '../../state/store';
 import type { SeasonVM } from '../../lib/seasons';
+import { BundlesWeek } from './Bundles';
 import { homeModel } from './home.logic';
-import { ObjectivesBlock } from './Objectives';
-import { RemarkForm } from './RemarkForm';
 import s from './HomeView.module.css';
 
 /**
- * Accueil: greeting, the shop's targets (revenue and cross-sell, week and month, from the BO),
- * "Le client demande…" shortcuts (each opens a pre-filtered section), the customer remark
- * form, and the season(s) of the moment. Blocks with nothing to show are left out.
+ * Accueil: the current range (season(s) of the moment, with their products) and the network's
+ * bundles of the week. The shop's targets and the customer remark form have their own pages
+ * (« Objectifs », « Remarques clients », in the "Plus" sheet).
  */
 export function HomeView() {
-  const { L, lang, actions } = useApp();
+  const { L, lang } = useApp();
   const month = currentMonth();
   const m = useMemo(() => homeModel(lang, month), [lang, month]);
 
   return (
     <section className={s.page}>
-      <div className={s.intro}>
-        <h1 className={s.h1}>{L.hello}</h1>
-        <p className={s.lead}>{L.homeIntro}</p>
-      </div>
+      <h1 className={s.h1}>{L.hello}</h1>
 
-      <ObjectivesBlock />
+      <section className={s.range} aria-labelledby="home-range">
+        <h2 id="home-range" className={s.eyebrow}>{L.curRange}</h2>
+        {m.now.length > 0
+          ? m.now.map(x => <SeasonNow key={x.id} season={x} />)
+          : <p className={s.empty}>{L.noSeasonNow}</p>}
+      </section>
 
-      <div className={s.asks}>
-        <span id="home-asks" className={s.eyebrow}>{L.asks}</span>
-        <div className={s.askGrid} role="group" aria-labelledby="home-asks">
-          {m.quick.map(a => (
-            <button key={a.id} type="button" className={s.ask} onClick={() => actions.go(a.view, a.extra)}>
-              <span className={s.askLabel}>{a.label}</span>
-              <span className={s.askSub}>{a.sub} <span aria-hidden="true">→</span></span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <RemarkForm />
-
-      {m.now.map(x => <SeasonNow key={x.id} season={x} />)}
+      <BundlesWeek />
     </section>
   );
 }
@@ -58,7 +45,7 @@ function SeasonNow({ season: x }: { season: SeasonVM }) {
           <span className={s.badge}>{L.now}</span>
           <span className={s.dates}>{x.dates}</span>
         </div>
-        <h2 id={titleId} className={s.h2}>{x.name}</h2>
+        <h3 id={titleId} className={s.h2}>{x.name}</h3>
         {x.tip && (
           <div className={s.tip}>
             <span className={s.tipLabel}>{L.tipL}</span>

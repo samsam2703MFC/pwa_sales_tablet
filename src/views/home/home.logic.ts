@@ -1,47 +1,12 @@
-import type { Lang, T2 } from '../../data/types';
-import { tr } from '../../lib/catalog';
-import { navLabel, type View } from '../../lib/i18n';
+import type { Lang } from '../../data/types';
 import { seasonsNow, toSeasonVM, type SeasonVM } from '../../lib/seasons';
-import type { AppState } from '../../state/store';
 
-/** "Le client demande…" tile: a question and the pre-filtered section it opens. */
-export interface QuickAsk {
-  /** Stable React key: the same in FR and NL, so a language switch updates the tile in place. */
-  id: string;
-  label: T2;
-  view: View;
-  extra?: Partial<AppState>;
-}
-
-/** The 6 quick questions, in prototype order, with the filters they pre-apply. */
-export const QUICK_ASKS: readonly QuickAsk[] = [
-  { id: 'gluten', label: ['Sans gluten ?', 'Glutenvrij?'], view: 'al', extra: { ex: ['gluten'] } },
-  { id: 'lait', label: ['Sans lait ?', 'Zonder melk?'], view: 'al', extra: { ex: ['lait'] } },
-  { id: 'noix', label: ['Sans fruits à coque ?', 'Zonder noten?'], view: 'al', extra: { ex: ['noix', 'arach'] } },
-  { id: 'vegan', label: ['Quelque chose de vegan ?', 'Iets veganistisch?'], view: 'gamme', extra: { vegan: true, cat: 'all' } },
-  { id: 'gateau', label: ['Commander un gâteau', 'Een taart bestellen'], view: 'svc' },
-  { id: 'lunch', label: ['Un lunch rapide', 'Een snelle lunch'], view: 'ventes' },
-];
-
-export interface QuickAskVM {
-  id: string;
-  label: string;
-  /** Name of the target section (red sub-link). */
-  sub: string;
-  view: View;
-  extra?: Partial<AppState>;
-}
-
-export const quickAsks = (lang: Lang): QuickAskVM[] =>
-  QUICK_ASKS.map(q => ({ id: q.id, label: tr(q.label, lang), sub: navLabel(q.view, lang), view: q.view, extra: q.extra }));
-
-/** Everything the home view shows, for a language and a month (1–12). */
+/** Everything the home view shows from the book, for a language and a month (1–12). */
 export interface HomeModel {
-  quick: QuickAskVM[];
+  /** The current range: the season(s) of the month. */
   now: SeasonVM[];
 }
 
 export const homeModel = (lang: Lang, month: number): HomeModel => ({
-  quick: quickAsks(lang),
   now: seasonsNow(month).map(x => toSeasonVM(x, lang)),
 });

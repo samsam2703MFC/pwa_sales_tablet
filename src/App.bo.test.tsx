@@ -48,7 +48,7 @@ const go = (label: string) => {
 const main = () => screen.getByRole('main');
 
 describe('app on a BO book', () => {
-  it('home: BO source in the top bar, the BO season of the moment with its photos, the BO targets', async () => {
+  it('home: BO source in the top bar, the BO season of the moment with its photos, the bundles of the week', () => {
     render(<App />);
     expect(screen.queryByRole('complementary')).toBeNull();
     expect(screen.getByText(/^BO · Ixelles · /)).toBeTruthy();
@@ -60,11 +60,25 @@ describe('app on a BO book', () => {
     expect(pills.map(b => b.textContent)).toEqual(['Couque suisse aux raisins1,60 €']);
     expect(pills[0].querySelector('img')!.getAttribute('src')).toBe('http://bo.test/consulant_bo/uploads/plano/panel/1610042.png');
     expect(pills[0].querySelector('img')!.classList.contains('photo')).toBe(true); // cropped to a circle
-    // Objectives: shown with a BO book, from GET <API>/tablette/objectifs.
-    expect(within(main()).getByText('Objectifs')).toBeTruthy();
+    // The bundles of the week (before their period: the weekly pattern), and nothing else.
+    expect(within(main()).getByText('Les bundles de la semaine')).toBeTruthy();
+    expect(within(main()).getByText('Dès le jeudi 15 octobre')).toBeTruthy();
+    expect(within(main()).queryByText('Objectifs')).toBeNull();
+    expect(within(main()).queryByRole('form')).toBeNull();
+    expect(objectives).not.toHaveBeenCalled();
+  });
+
+  it('« Objectifs » (Plus sheet): the BO targets, from GET <API>/tablette/objectifs', async () => {
+    go('Objectifs');
+    expect(within(main()).getByRole('heading', { level: 1 }).textContent).toBe('Objectifs');
     expect(await within(main()).findByText(/^4\s311 € \/ 6\s000 €$/)).toBeTruthy();
     expect(String(objectives.mock.calls[0][0])).toMatch(/\/api\/cockpit\/tablette\/objectifs$/);
     expect(within(main()).getByText('2,05 / 2,00')).toBeTruthy(); // items per ticket this month
+  });
+
+  it('« Remarques clients » (Plus sheet): the customer remark form', () => {
+    go('Remarques clients');
+    expect(within(main()).getByRole('heading', { level: 1 }).textContent).toBe('Remarques clients');
     expect(within(main()).getByRole('form', { name: "Remarque d'un client" })).toBeTruthy();
   });
 

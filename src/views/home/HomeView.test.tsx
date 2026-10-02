@@ -10,29 +10,16 @@ function Probe() {
 }
 const state = (): AppState => JSON.parse(screen.getByTestId('state').textContent ?? '{}');
 
-/** Language switch, like the shell's FR/NL toggle. */
-function SwitchLang() {
-  const { actions } = useApp();
-  return <button type="button" data-testid="to-nl" onClick={() => actions.setLang(1)} />;
-}
-
 const renderHome = (lang: Lang = 0, initial: Partial<AppState> = {}) =>
   render(
     <AppProvider initial={{ lang, ...initial }}>
       <HomeView />
       <Probe />
-      <SwitchLang />
     </AppProvider>,
   );
 
-const tile = (label: string) => screen.getByText(label, { exact: true }).closest('button')!;
-
-/** jsdom has no scrolling: record the "back to top" of each section change instead. */
-const scrollTo = vi.fn();
 beforeEach(() => {
-  scrollTo.mockClear();
-  window.scrollTo = scrollTo as unknown as typeof window.scrollTo;
-  // "En ce moment" follows the device clock: pin it to 2 October (autumn).
+  // "En ce moment" and the bundles follow the device clock: pin it to 2 October (autumn).
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(new Date(2026, 9, 2, 12));
 });
@@ -42,47 +29,57 @@ afterEach(() => {
 });
 
 describe('HomeView', () => {
-  it('renders the greeting and the 6 quick asks in FR', () => {
+  it('shows only the greeting, the current range and the bundles of the week (shop request)', () => {
     renderHome(0);
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Bonjour !');
-    expect(screen.getByRole('group', { name: 'Le client demande…' }).querySelectorAll('button')).toHaveLength(6);
-  });
-
-  it('shows, in order: greeting, quick asks, customer remark form, season of the moment', () => {
-    renderHome(0);
-    const page = document.querySelector('section')!;
-    const blocks = [
-      screen.getByRole('heading', { level: 1 }),
-      screen.getByRole('group', { name: 'Le client demande…' }),
-      screen.getByRole('form', { name: "Remarque d'un client" }),
-      screen.getByRole('article', { name: 'Automne' }),
-    ];
-    for (const b of blocks) expect(page.contains(b)).toBe(true);
-    for (let i = 1; i < blocks.length; i++) {
-      expect(blocks[i - 1].compareDocumentPosition(blocks[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    }
-    // The objectives come from the BO: not shown with the bundled sample data (Objectives.test.tsx).
+    expect(screen.getAllByRole('heading', { level: 2 }).map(h => h.textContent)).toEqual(['La gamme actuelle', 'Les bundles de la semaine']);
+    const range = screen.getByRole('region', { name: 'La gamme actuelle' });
+    expect(within(range).getByRole('article', { name: 'Automne' })).toBeTruthy();
+    // range first, then the bundles
+    const bundles = screen.getAllByRole('region', { name: 'Les bundles de la semaine' })[0];
+    expect(range.compareDocumentPosition(bundles) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // gone from the home page: quick asks, remark form, targets, onboarding banner, next season, best sellers
+    expect(screen.queryByRole('group', { name: 'Le client demande…' })).toBeNull();
+    expect(screen.queryByRole('form')).toBeNull();
     expect(screen.queryByText('Objectifs')).toBeNull();
-  });
-
-  it('no longer has the onboarding banner, "À préparer" nor "Les plus vendus" (shop request)', () => {
-    renderHome(0);
     expect(screen.queryByText(/Formation vente en \d+ modules/)).toBeNull();
     expect(screen.queryByText('À préparer')).toBeNull();
     expect(screen.queryByText('Les plus vendus')).toBeNull();
-    // Only the season(s) of the moment: autumn in October, not Saint-Nicolas (next).
-    expect(screen.getAllByRole('heading', { level: 2 }).map(h => h.textContent)).toEqual(["Remarque d'un client", 'Automne']);
     expect(screen.getAllByText('En ce moment')).toHaveLength(1);
+  });
+
+  it('bundles before the period (2 October): the weekly pattern, "Dès le jeudi 15 octobre"', () => {
+    renderHome(0);
+    expect(screen.getByText('Dès le jeudi 15 octobre')).toBeTruthy();
+    expect(screen.getByText('Du 15 octobre au 15 décembre')).toBeTruthy();
+    const table = screen.getByRole('table');
+    expect(within(table).getAllByRole('columnheader').slice(1).map(h => h.textContent)).toEqual(['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']);
+    // sample data, no shop: every bundle, the shop-only one says where
+    expect(within(table).getAllByRole('rowheader')).toHaveLength(8);
+    const lunch = within(table).getByRole('rowheader', { name: /^Le lunch/ }).closest('tr')!;
+    expect([...lunch.querySelectorAll('td')].map(td => td.textContent!.replace(/\u00a0/g, ' '))).toEqual(['11 → 14 h', '11 → 14 h', '11 → 14 h', '11 → 14 h', '11 → 14 h', '', '']);
+    expect(within(lunch).getByText('8,50 €')).toBeTruthy();
+    expect(within(table).getByText('Seulement à Gosselies, Halle, Sombreffe · Halle : ½ quiche + ½ tarte')).toBeTruthy();
+  });
+
+  it('bundles during the period: dates and today\'s column (Friday 16 October)', () => {
+    vi.setSystemTime(new Date(2026, 9, 16, 12));
+    renderHome(0);
+    expect(screen.queryByText(/^Dès le/)).toBeNull();
+    const heads = within(screen.getByRole('table')).getAllByRole('columnheader').slice(1);
+    expect(heads.map(h => h.textContent)).toEqual(['Lun12', 'Mar13', 'Mer14', 'Jeu15', 'Ven16 (Aujourd\'hui)', 'Sam17', 'Dim18']);
+    // Monday to Wednesday are before the period
+    const petitDej = screen.getByRole('rowheader', { name: /^Le petit-déj/ }).closest('tr')!;
+    expect([...petitDej.querySelectorAll('td')].map(td => td.textContent!.replace(/\u00a0/g, ' '))).toEqual(['', '', '', 'avant 11 h', 'avant 11 h', '', '']);
   });
 
   it('renders in NL', () => {
     renderHome(1);
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Goedendag!');
-    expect(screen.getByRole('group', { name: 'De klant vraagt…' }).querySelectorAll('button')).toHaveLength(6);
-    expect(screen.getByRole('form', { name: 'Opmerking van een klant' })).toBeTruthy();
-    expect(screen.getByRole('heading', { level: 2, name: 'Herfst' })).toBeTruthy();
+    expect(screen.getAllByRole('heading', { level: 2 }).map(h => h.textContent)).toEqual(['Het huidige assortiment', 'De bundels van de week']);
+    expect(screen.getByRole('heading', { level: 3, name: 'Herfst' })).toBeTruthy();
+    expect(screen.getByText('Vanaf donderdag 15 oktober')).toBeTruthy();
     expect(screen.queryByText(/Verkoopopleiding/)).toBeNull();
-    expect(screen.queryByText('Topverkopers')).toBeNull();
   });
 
   it('shows every season running this month (December: Saint-Nicolas and Christmas)', () => {
@@ -94,29 +91,10 @@ describe('HomeView', () => {
     expect(seasons[1]).toBe(screen.getByRole('article', { name: 'Noël & Nouvel An' }));
   });
 
-  const cases: [string, Partial<AppState>][] = [
-    ['Sans gluten ?', { view: 'al', ex: ['gluten'] }],
-    ['Sans lait ?', { view: 'al', ex: ['lait'] }],
-    ['Sans fruits à coque ?', { view: 'al', ex: ['noix', 'arach'] }],
-    ['Quelque chose de vegan ?', { view: 'gamme', vegan: true, cat: 'all' }],
-    ['Commander un gâteau', { view: 'svc' }],
-    ['Un lunch rapide', { view: 'ventes' }],
-  ];
-  for (const [label, expected] of cases) {
-    it(`"${label}" opens the pre-filtered section`, () => {
-      renderHome(0, { cat: 'pain', sel: 'pistolet', stack: ['baguette'], more: true, onbMod: 2 });
-      fireEvent.click(tile(label));
-      expect(state()).toMatchObject({ ...expected, q: '', sel: null, stack: [], more: false, onbMod: -1 });
-      if (!('cat' in expected)) expect(state().cat).toBe('pain');
-      expect(scrollTo).toHaveBeenCalledWith(0, 0);
-    });
-  }
-
-  it('updates the quick asks in place on a language switch (keeps the browser scroll anchor)', () => {
+  it('after the period, no bundles block', () => {
+    vi.setSystemTime(new Date(2026, 11, 20, 12));
     renderHome(0);
-    const before = tile('Sans lait ?');
-    fireEvent.click(screen.getByTestId('to-nl'));
-    expect(tile('Zonder melk?')).toBe(before);
+    expect(screen.queryByText('Les bundles de la semaine')).toBeNull();
   });
 
   it('a product of the season of the moment opens its product sheet', () => {
