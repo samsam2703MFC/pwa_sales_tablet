@@ -4,15 +4,11 @@ import s from './LangToggle.module.css';
 
 const LANGS: readonly (readonly [Lang, string, string])[] = [[0, 'FR', 'fr'], [1, 'NL', 'nl']];
 
-/**
- * FR/NL segmented toggle.
- * - `sidebar`: beige pill, active segment white with Ruby Red text (36 px).
- * - `compact`: white pill, active segment Ruby Red (52×40 px).
- */
-export function LangToggle({ variant }: { variant: 'sidebar' | 'compact' }) {
+/** FR/NL segmented toggle of the top bar: white pill, active segment Ruby Red (52×40 px). */
+export function LangToggle() {
   const { lang, actions } = useApp();
   return (
-    <div className={`${s.toggle} ${s[variant]}`} role="group" aria-label={lang ? 'Taal' : 'Langue'}>
+    <div className={`${s.toggle} ${s.compact}`} role="group" aria-label={lang ? 'Taal' : 'Langue'}>
       {LANGS.map(([l, label, code]) => (
         <button
           key={label}

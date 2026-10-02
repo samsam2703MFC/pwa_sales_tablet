@@ -1,18 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { BOOK } from '../../data/book';
-import { onbLabels } from '../../lib/i18n';
-import { FIXTURE_BOOK as F } from '../../test/fixtures';
-import { bestSellers, homeModel, ONB_MODULES, quickAsks } from './home.logic';
+import { homeModel, quickAsks } from './home.logic';
 
 // Season selection and the season view model: src/lib/seasons.test.ts.
-
-describe('best sellers', () => {
-  it('keeps the products flagged best, in data order, as translated cards', () => {
-    expect(bestSellers(0, F.products).map(p => [p.id, p.name, p.price])).toEqual([['p1', 'p1-fr', '2,50 €'], ['p3', 'p3-fr', '']]);
-    expect(bestSellers(1, F.products).map(p => p.name)).toEqual(['p1-nl', 'p3-nl']);
-    expect(bestSellers(0, [])).toEqual([]);
-  });
-});
 
 describe('quick asks', () => {
   it('opens the pre-filtered sections of the prototype', () => {
@@ -60,34 +50,17 @@ describe('quick asks', () => {
   });
 });
 
-describe('onboarding banner', () => {
-  it('counts the 7 modules (opening + 6)', () => {
-    expect(ONB_MODULES).toBe(7);
-  });
-
-  it('matches the prototype wording in FR and NL', () => {
-    expect(onbLabels(0).homeT(ONB_MODULES)).toBe('Formation vente en 7 modules · 1 min de lecture par module');
-    expect(onbLabels(1).homeT(ONB_MODULES)).toBe('Verkoopopleiding in 7 modules · 1 min lezen per module');
-  });
-});
-
 describe('sample data (prototype golden values)', () => {
-  it('best sellers', () => {
-    expect(bestSellers(0).map(p => p.id)).toEqual(['croissant', 'pistolet', 'campagne', 'tarteriz', 'cookie', 'club']);
-    expect(bestSellers(1)[0].name).toBe('Croissant met roomboter');
-  });
-
   it('assembles the home for October (FR)', () => {
     const m = homeModel(0, 10);
     expect(m.quick).toHaveLength(6);
     expect(m.now.map(x => x.name)).toEqual(['Automne']);
-    expect(m.next?.name).toBe('Saint-Nicolas');
-    expect(m.best).toHaveLength(6);
+    // The onboarding banner, "À préparer" and "Les plus vendus" are no longer on the home page.
+    expect(Object.keys(m)).toEqual(['quick', 'now']);
   });
 
   it('assembles the home for December (NL)', () => {
     const m = homeModel(1, 12);
     expect(m.now.map(x => x.name)).toEqual(['Sinterklaas', 'Kerst & Nieuwjaar']);
-    expect(m.next?.name).toBe('Driekoningen');
   });
 });

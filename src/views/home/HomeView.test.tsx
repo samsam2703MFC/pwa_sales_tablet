@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Lang } from '../../data/types';
 import { AppProvider, useApp, type AppState } from '../../state/store';
@@ -32,8 +32,14 @@ const scrollTo = vi.fn();
 beforeEach(() => {
   scrollTo.mockClear();
   window.scrollTo = scrollTo as unknown as typeof window.scrollTo;
+  // "En ce moment" follows the device clock: pin it to 2 October (autumn).
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 9, 2, 12));
 });
-afterEach(cleanup);
+afterEach(() => {
+  vi.useRealTimers();
+  cleanup();
+});
 
 describe('HomeView', () => {
   it('renders the greeting and the 6 quick asks in FR', () => {
@@ -42,11 +48,50 @@ describe('HomeView', () => {
     expect(screen.getByRole('group', { name: 'Le client demande…' }).querySelectorAll('button')).toHaveLength(6);
   });
 
+  it('shows, in order: greeting, quick asks, customer remark form, season of the moment', () => {
+    renderHome(0);
+    const page = document.querySelector('section')!;
+    const blocks = [
+      screen.getByRole('heading', { level: 1 }),
+      screen.getByRole('group', { name: 'Le client demande…' }),
+      screen.getByRole('form', { name: "Remarque d'un client" }),
+      screen.getByRole('article', { name: 'Automne' }),
+    ];
+    for (const b of blocks) expect(page.contains(b)).toBe(true);
+    for (let i = 1; i < blocks.length; i++) {
+      expect(blocks[i - 1].compareDocumentPosition(blocks[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+    // The objectives come from the BO: not shown with the bundled sample data (Objectives.test.tsx).
+    expect(screen.queryByText('Objectifs')).toBeNull();
+  });
+
+  it('no longer has the onboarding banner, "À préparer" nor "Les plus vendus" (shop request)', () => {
+    renderHome(0);
+    expect(screen.queryByText(/Formation vente en \d+ modules/)).toBeNull();
+    expect(screen.queryByText('À préparer')).toBeNull();
+    expect(screen.queryByText('Les plus vendus')).toBeNull();
+    // Only the season(s) of the moment: autumn in October, not Saint-Nicolas (next).
+    expect(screen.getAllByRole('heading', { level: 2 }).map(h => h.textContent)).toEqual(["Remarque d'un client", 'Automne']);
+    expect(screen.getAllByText('En ce moment')).toHaveLength(1);
+  });
+
   it('renders in NL', () => {
     renderHome(1);
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Goedendag!');
-    expect(screen.getByText('Verkoopopleiding in 7 modules · 1 min lezen per module')).toBeTruthy();
-    expect(screen.getByRole('heading', { level: 2, name: 'Topverkopers' })).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'De klant vraagt…' }).querySelectorAll('button')).toHaveLength(6);
+    expect(screen.getByRole('form', { name: 'Opmerking van een klant' })).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 2, name: 'Herfst' })).toBeTruthy();
+    expect(screen.queryByText(/Verkoopopleiding/)).toBeNull();
+    expect(screen.queryByText('Topverkopers')).toBeNull();
+  });
+
+  it('shows every season running this month (December: Saint-Nicolas and Christmas)', () => {
+    vi.setSystemTime(new Date(2026, 11, 3, 12));
+    renderHome(0);
+    const seasons = screen.getAllByRole('article');
+    expect(seasons).toHaveLength(2);
+    expect(seasons[0]).toBe(screen.getByRole('article', { name: 'Saint-Nicolas' }));
+    expect(seasons[1]).toBe(screen.getByRole('article', { name: 'Noël & Nouvel An' }));
   });
 
   const cases: [string, Partial<AppState>][] = [
@@ -74,15 +119,11 @@ describe('HomeView', () => {
     expect(tile('Zonder melk?')).toBe(before);
   });
 
-  it('the onboarding banner opens the module list', () => {
-    renderHome(0, { onbMod: 3 });
-    fireEvent.click(tile('Formation vente en 7 modules · 1 min de lecture par module'));
-    expect(state()).toMatchObject({ view: 'onb', onbMod: -1 });
-  });
-
-  it('a best seller opens its product sheet', () => {
+  it('a product of the season of the moment opens its product sheet', () => {
     renderHome(0);
-    fireEvent.click(tile('Croissant pur beurre'));
-    expect(state()).toMatchObject({ sel: 'croissant', stack: [] });
+    const season = screen.getByRole('article', { name: 'Automne' });
+    expect(within(season).getByText('Offre 4 + 1 sur la brioche croustillante.')).toBeTruthy();
+    fireEvent.click(within(season).getByText('Brioche croustillante').closest('button')!);
+    expect(state()).toMatchObject({ sel: 'brioche', stack: [] });
   });
 });

@@ -4,6 +4,7 @@ import './styles/global.css';
 import { reloadWhenIdle, watchForUpdates } from './pwa/register';
 import { BOOK, SAMPLE_BOOK, setBook } from './data/book';
 import { bookUrl, refreshBook, remotePhotos, startBook } from './data/remote';
+import { remarksUrl, startRemarkSync } from './data/remarks';
 import { validateBook } from './data/validate';
 import { warmPhotos } from './data/warmPhotos';
 import { API_ROOT, PUBLIC_ROOT } from './lib/api';
@@ -50,6 +51,9 @@ async function boot() {
   };
   const stop = watchForUpdates({ update: check });
   if (refresh) void check();
+
+  // Customer remarks typed while offline leave now, and whenever the network comes back.
+  startRemarkSync(remarksUrl(API_ROOT), storage);
 
   if (source.kind !== 'sample') void warmPhotos(remotePhotos(book));
 }

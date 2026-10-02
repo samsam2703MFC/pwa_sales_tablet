@@ -1,14 +1,8 @@
-import { BOOK } from '../../data/book';
-import { ONB_SHORT } from '../../data/onboardingShort';
-import type { Lang, Product, T2 } from '../../data/types';
-import { toCard, tr, type ProductCardVM } from '../../lib/catalog';
+import type { Lang, T2 } from '../../data/types';
+import { tr } from '../../lib/catalog';
 import { navLabel, type View } from '../../lib/i18n';
-import { nextSeason, seasonsNow, toSeasonVM, type SeasonVM } from '../../lib/seasons';
+import { seasonsNow, toSeasonVM, type SeasonVM } from '../../lib/seasons';
 import type { AppState } from '../../state/store';
-
-/** "Les plus vendus": products flagged `best`, in data order. */
-export const bestSellers = (lang: Lang, products: readonly Product[] = BOOK.products): ProductCardVM[] =>
-  products.filter(p => p.best).map(p => toCard(p, lang));
 
 /** "Le client demande…" tile: a question and the pre-filtered section it opens. */
 export interface QuickAsk {
@@ -41,24 +35,13 @@ export interface QuickAskVM {
 export const quickAsks = (lang: Lang): QuickAskVM[] =>
   QUICK_ASKS.map(q => ({ id: q.id, label: tr(q.label, lang), sub: navLabel(q.view, lang), view: q.view, extra: q.extra }));
 
-/** Number of onboarding modules (opening + 6) — one short version per module of the livret. */
-export const ONB_MODULES = ONB_SHORT.length;
-
 /** Everything the home view shows, for a language and a month (1–12). */
 export interface HomeModel {
   quick: QuickAskVM[];
   now: SeasonVM[];
-  /** null when the book has no season. */
-  next: SeasonVM | null;
-  best: ProductCardVM[];
 }
 
-export const homeModel = (lang: Lang, month: number): HomeModel => {
-  const next = nextSeason(month);
-  return {
-    quick: quickAsks(lang),
-    now: seasonsNow(month).map(x => toSeasonVM(x, lang)),
-    next: next && toSeasonVM(next, lang),
-    best: bestSellers(lang),
-  };
-};
+export const homeModel = (lang: Lang, month: number): HomeModel => ({
+  quick: quickAsks(lang),
+  now: seasonsNow(month).map(x => toSeasonVM(x, lang)),
+});

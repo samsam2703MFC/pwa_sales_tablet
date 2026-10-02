@@ -8,7 +8,7 @@ const LABELS = [
     homeIntro: "Ce qu'il faut savoir aujourd'hui en boutique.", now: 'En ce moment', next: 'À préparer', best: 'Les plus vendus', tipL: 'Consigne',
     top: 'Top vente', vege: 'Végétarien', vegeS: 'VÉGÉ', gammeTitle: 'La gamme', all: 'Tout',
     say: 'À dire au client', ingr: 'Ingrédients', alg: 'Allergènes', contains: 'Contient', traces: 'Traces possibles', trS: 'Traces',
-    keep: 'Conservation', dlc: 'Durée', also: 'Proposez aussi', allYear: "Toute l'année", close: 'Fermer',
+    keep: 'Conservation', keepNone: 'Non renseignée', noSeasonNow: 'Aucune saison en ce moment.', dlc: 'Durée', also: 'Proposez aussi', allYear: "Toute l'année", close: 'Fermer',
     alTitle: 'Allergènes', alIntro: 'Le client est allergique à :', alReset: 'Effacer', alOk: 'produits compatibles', alWarn: 'avec traces possibles',
     alNote: "En cas d'allergie sévère : montrer la fiche, signaler les traces possibles et laisser le client décider. Ne jamais garantir qu'un produit est « sans ». En cas de doute, appeler la responsable.",
     calTitle: 'Saisons', ventesTitle: 'Vendre plus', combos: 'Formules', reflexes: 'Les bons réflexes', pairs: 'Associations par produit',
@@ -18,7 +18,7 @@ const LABELS = [
     // Unverified BO data (not in the prototype)
     alUnk: 'À vérifier', alCheck: "À vérifier sur l'étiquette", alUnkN: "à vérifier sur l'étiquette",
     alUnkText: "Les allergènes de ce produit ne sont pas encore vérifiés : ne jamais garantir qu'il est « sans ». En cas de doute, appeler la responsable.",
-    alRawL: 'Mention de la fiche :', trUnk: "Traces non renseignées : à vérifier sur l'étiquette.",
+    alRawL: 'Détail :', trUnk: "Traces non renseignées : à vérifier sur l'étiquette.",
     srcSample: "Données d'exemple", srcOffline: 'Hors ligne', srcOfflineOf: 'données du', srcNetwork: 'réseau',
   },
   {
@@ -27,7 +27,7 @@ const LABELS = [
     homeIntro: 'Wat u vandaag moet weten in de winkel.', now: 'Nu', next: 'Voor te bereiden', best: 'Topverkopers', tipL: 'Richtlijn',
     top: 'Topper', vege: 'Vegetarisch', vegeS: 'VEGGIE', gammeTitle: 'Het assortiment', all: 'Alles',
     say: 'Tegen de klant', ingr: 'Ingrediënten', alg: 'Allergenen', contains: 'Bevat', traces: 'Mogelijke sporen', trS: 'Sporen',
-    keep: 'Bewaring', dlc: 'Houdbaar', also: 'Stel ook voor', allYear: 'Het hele jaar', close: 'Sluiten',
+    keep: 'Bewaring', keepNone: 'Niet ingevuld', noSeasonNow: 'Geen seizoen op dit moment.', dlc: 'Houdbaar', also: 'Stel ook voor', allYear: 'Het hele jaar', close: 'Sluiten',
     alTitle: 'Allergenen', alIntro: 'De klant is allergisch voor:', alReset: 'Wissen', alOk: 'geschikte producten', alWarn: 'met mogelijke sporen',
     alNote: 'Bij een ernstige allergie: toon de fiche, meld mogelijke sporen en laat de klant beslissen. Nooit garanderen dat een product "vrij van" is. Bij twijfel de verantwoordelijke bellen.',
     calTitle: 'Seizoenen', ventesTitle: 'Meer verkopen', combos: 'Formules', reflexes: 'De juiste reflexen', pairs: 'Combinaties per product',
@@ -36,7 +36,7 @@ const LABELS = [
     d0: 'Onmiddellijk', d1: 'Dezelfde dag', dn: 'dagen',
     alUnk: 'Nakijken', alCheck: 'Te controleren op het etiket', alUnkN: 'te controleren op het etiket',
     alUnkText: 'De allergenen van dit product zijn nog niet nagekeken: nooit garanderen dat het "vrij van" is. Bij twijfel de verantwoordelijke bellen.',
-    alRawL: 'Vermelding op de fiche:', trUnk: 'Sporen niet ingevuld: te controleren op het etiket.',
+    alRawL: 'Detail:', trUnk: 'Sporen niet ingevuld: te controleren op het etiket.',
     srcSample: 'Voorbeeldgegevens', srcOffline: 'Offline', srcOfflineOf: 'gegevens van', srcNetwork: 'netwerk',
   },
 ] as const;
@@ -67,6 +67,46 @@ const STATS_LABELS = pair(
 export type StatsLabels = (typeof STATS_LABELS)[0];
 export const statsLabels = (lang: Lang): StatsLabels => STATS_LABELS[lang];
 
+/** Home page targets (revenue and cross-sell, week and month), from the BO (GET /tablette/objectifs). */
+const OBJ_LABELS = pair(
+  {
+    title: 'Objectifs', ca: "Chiffre d'affaires", cross: 'Vente additionnelle', week: 'Cette semaine', month: 'Ce mois',
+    obj: 'Objectif', expected: 'attendu à ce jour', reached: 'Atteint', toGo: 'À atteindre', ahead: 'En avance', behind: 'En retard',
+    noTarget: "Pas d'objectif", noData: 'Pas encore de chiffres', tickets: 'tickets', perTicket: 'articles par ticket',
+  },
+  {
+    title: 'Doelen', ca: 'Omzet', cross: 'Bijverkoop', week: 'Deze week', month: 'Deze maand',
+    obj: 'Doel', expected: 'verwacht tot vandaag', reached: 'Gehaald', toGo: 'Nog te gaan', ahead: 'Voor op schema', behind: 'Achter op schema',
+    noTarget: 'Geen doel', noData: 'Nog geen cijfers', tickets: 'tickets', perTicket: 'artikelen per ticket',
+  },
+);
+export type ObjLabels = (typeof OBJ_LABELS)[0];
+export const objLabels = (lang: Lang): ObjLabels => OBJ_LABELS[lang];
+
+/** Customer remark form of the home page (sent to the BO, POST /tablette/remarques). */
+const REMARK_LABELS = pair(
+  {
+    title: "Remarque d'un client", hint: 'Ce que le client a dit, avec ses mots. Elle part au back-office.',
+    types: { compliment: 'Compliment', suggestion: 'Suggestion', reclamation: 'Réclamation' },
+    placeholder: 'Ex. : « Le pain aux noix était encore meilleur la semaine passée. »',
+    send: 'Envoyer', sending: 'Envoi…', chooseType: 'Choisissez le type de remarque.',
+    sent: 'Merci ! La remarque est envoyée.', queued: 'Gardée sur la tablette : elle partira dès que la connexion revient.',
+    rejected: "Le back-office a refusé cette remarque : vérifiez le texte.", lost: "La remarque n'a pas pu être envoyée ni gardée : réessayez.",
+    waiting: (n: number) => (n > 1 ? `${n} remarques en attente d'envoi.` : "1 remarque en attente d'envoi."),
+  },
+  {
+    title: 'Opmerking van een klant', hint: 'Wat de klant zei, in zijn eigen woorden. Ze gaat naar de back-office.',
+    types: { compliment: 'Compliment', suggestion: 'Suggestie', reclamation: 'Klacht' },
+    placeholder: 'Bv.: "Het notenbrood was vorige week nog lekkerder."',
+    send: 'Versturen', sending: 'Versturen…', chooseType: 'Kies het soort opmerking.',
+    sent: 'Bedankt! De opmerking is verstuurd.', queued: 'Bewaard op de tablet: ze vertrekt zodra er weer verbinding is.',
+    rejected: 'De back-office heeft deze opmerking geweigerd: controleer de tekst.', lost: 'De opmerking kon niet verstuurd of bewaard worden: probeer opnieuw.',
+    waiting: (n: number) => (n > 1 ? `${n} opmerkingen wachten om verstuurd te worden.` : '1 opmerking wacht om verstuurd te worden.'),
+  },
+);
+export type RemarkLabels = (typeof REMARK_LABELS)[0];
+export const remarkLabels = (lang: Lang): RemarkLabels => REMARK_LABELS[lang];
+
 /** Onboarding labels. */
 const ONB_LABELS = pair(
   {
@@ -85,7 +125,7 @@ const ONB_LABELS = pair(
 export type OnbLabels = (typeof ONB_LABELS)[0];
 export const onbLabels = (lang: Lang): OnbLabels => ONB_LABELS[lang];
 
-export type View = 'home' | 'gamme' | 'saisons' | 'al' | 'ventes' | 'faq' | 'svc' | 'cons' | 'stats' | 'onb';
+export type View = 'home' | 'gamme' | 'saisons' | 'al' | 'ventes' | 'faq' | 'svc' | 'cons' | 'stats' | 'bases' | 'onb';
 export type NavGroup = 'v' | 'f';
 
 /** Navigation entries: [id, FR, NL, group]. Order = sidebar order. */
@@ -99,6 +139,7 @@ export const NAV: readonly (readonly [View, string, string, NavGroup])[] = [
   ['svc', 'Services', 'Diensten', 'v'],
   ['cons', 'Conservation', 'Bewaring', 'v'],
   ['stats', 'Statistiques', 'Statistieken', 'v'],
+  ['bases', 'Les bases', 'De basis', 'f'],
   ['onb', 'Onboarding', 'Onboarding', 'f'],
 ];
 

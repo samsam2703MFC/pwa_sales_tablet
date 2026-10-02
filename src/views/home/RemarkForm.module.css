@@ -1,0 +1,126 @@
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.hint {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.types {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Same chips as the allergen filter. */
+.type {
+  min-height: 52px;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  border: 0.5px solid var(--color-border-secondary);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.active {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 500;
+}
+
+.text {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 0.5px solid var(--color-border-secondary);
+  background: var(--color-background-secondary);
+  font-family: var(--font-ui);
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.text:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 0;
+  background: var(--color-surface);
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.count {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.send {
+  min-height: 52px;
+  padding: 0 28px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+.send:active:not(:disabled) {
+  transform: scale(var(--press-scale));
+}
+
+.send:disabled {
+  background: var(--color-border-secondary);
+  cursor: default;
+}
+
+.msg {
+  margin: 0;
+  min-height: 1.6em;
+  font-size: 15px;
+  color: var(--color-primary);
+}
+
+.msg:empty {
+  display: none;
+}
+
+.err {
+  color: var(--color-collection-border);
+}
+
+/* Kept on the tablet / waiting to leave: information, neither a confirmation nor an error. */
+.wait {
+  color: var(--color-text-muted);
+}

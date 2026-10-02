@@ -409,6 +409,10 @@
   line-height: 1.55;
 }
 
+.keepNone {
+  color: var(--color-text-muted);
+}
+
 /* --- "Ce que les clients demandent" ----------------------------------------- */
 .faqList {
   display: flex;

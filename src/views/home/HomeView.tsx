@@ -1,18 +1,17 @@
 import { useMemo } from 'react';
 import { PillRow, ProductPill } from '../../components/ProductPill';
-import { SectionTitle } from '../../components/PageTitle';
-import { asset } from '../../lib/asset';
 import { currentMonth } from '../../lib/date';
-import { onbLabels } from '../../lib/i18n';
 import { useApp } from '../../state/store';
 import type { SeasonVM } from '../../lib/seasons';
-import { homeModel, ONB_MODULES } from './home.logic';
+import { homeModel } from './home.logic';
+import { ObjectivesBlock } from './Objectives';
+import { RemarkForm } from './RemarkForm';
 import s from './HomeView.module.css';
 
 /**
- * Accueil: greeting, "Le client demande…" shortcuts (each opens a pre-filtered section),
- * onboarding banner, season(s) of the moment, next season to prepare, best sellers.
- * Blocks with nothing to show (no season, no best seller, empty instruction) are left out.
+ * Accueil: greeting, the shop's targets (revenue and cross-sell, week and month, from the BO),
+ * "Le client demande…" shortcuts (each opens a pre-filtered section), the customer remark
+ * form, and the season(s) of the moment. Blocks with nothing to show are left out.
  */
 export function HomeView() {
   const { L, lang, actions } = useApp();
@@ -26,6 +25,8 @@ export function HomeView() {
         <p className={s.lead}>{L.homeIntro}</p>
       </div>
 
+      <ObjectivesBlock />
+
       <div className={s.asks}>
         <span id="home-asks" className={s.eyebrow}>{L.asks}</span>
         <div className={s.askGrid} role="group" aria-labelledby="home-asks">
@@ -38,44 +39,9 @@ export function HomeView() {
         </div>
       </div>
 
-      <button type="button" className={s.onb} onClick={() => actions.go('onb')}>
-        {/* spans, not divs: a <button> only allows phrasing content (display set in CSS) */}
-        <span className={s.onbThumb}>
-          <img src={asset('img/onb/croissant.png')} alt="" />
-        </span>
-        <span className={s.onbText}>
-          <span className={s.onbEyebrow}>Onboarding</span>
-          <span className={s.onbTitle}>{onbLabels(lang).homeT(ONB_MODULES)}</span>
-        </span>
-        <span className={s.onbArrow} aria-hidden="true">→</span>
-      </button>
+      <RemarkForm />
 
       {m.now.map(x => <SeasonNow key={x.id} season={x} />)}
-
-      {m.next && (
-        <div className={s.next}>
-          <img src={m.next.img} alt="" className={s.nextImg} />
-          <div className={s.nextText}>
-            <span className={s.nextEyebrow}>{L.next} · {m.next.name}{m.next.dates && <> · {m.next.dates}</>}</span>
-            {m.next.tip && <span className={s.nextTip}>{m.next.tip}</span>}
-          </div>
-        </div>
-      )}
-
-      {m.best.length > 0 && (
-        <div className={s.best}>
-          <SectionTitle>{L.best}</SectionTitle>
-          <div className={s.bestGrid}>
-            {m.best.map(p => (
-              <button key={p.id} type="button" className={s.bestTile} onClick={() => actions.openProduct(p.id)}>
-                <img src={p.img} alt="" loading="lazy" decoding="async" className={s.bestImg} />
-                <span className={s.bestName}>{p.name}</span>
-                <span className={s.bestPrice}>{p.price}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </section>
   );
 }

@@ -49,3 +49,11 @@ export const seasonCards = (
   seasons: readonly Season[] = BOOK.seasons,
   products: readonly Product[] = BOOK.products,
 ): SeasonCardVM[] => seasons.map(x => ({ ...toSeasonVM(x, lang, products), isNow: x.m.includes(month) }));
+
+/** The cards the Saisons page shows: only the seasons running this month, in data order. */
+export const currentSeasonCards = (
+  lang: Lang,
+  month: number,
+  seasons: readonly Season[] = BOOK.seasons,
+  products: readonly Product[] = BOOK.products,
+): SeasonCardVM[] => seasonCards(lang, month, seasons, products).filter(c => c.isNow);

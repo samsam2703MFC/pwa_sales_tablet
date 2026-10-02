@@ -195,12 +195,11 @@ function Sheet() {
               <h3 className={s.eyebrow}>{L.dlc}</h3>
               <span className={s.dlc}>{vm.dlc}</span>
             </div>
-            {vm.keep && (
-              <div className={s.keepCol}>
-                <h3 className={s.eyebrow}>{L.keep}</h3>
-                <span className={s.keep}>{vm.keep}</span>
-              </div>
-            )}
+            {/* Always shown, like the shelf life: staff must see when the BO has nothing yet. */}
+            <div className={s.keepCol}>
+              <h3 className={s.eyebrow}>{L.keep}</h3>
+              <span className={vm.keep ? s.keep : `${s.keep} ${s.keepNone}`}>{vm.keep || L.keepNone}</span>
+            </div>
           </div>
 
           {vm.faq.length > 0 && (

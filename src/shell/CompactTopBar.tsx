@@ -18,7 +18,7 @@ export function CompactTopBar() {
         <span className={s.book}>{L.book}</span>
         <span className={s.source}>{sourceLabel(BOOK_SOURCE, lang)}</span>
       </div>
-      <LangToggle variant="compact" />
+      <LangToggle />
     </div>
   );
 }
