@@ -30,7 +30,7 @@ describe('VentesView', () => {
     expect(screen.getByText('3,90 €')).toBeTruthy();
     const list = screen.getByRole('list');
     expect(within(list).getAllByRole('listitem').map(li => li.textContent?.slice(0, 1))).toEqual(['1', '2', '3', '4']);
-    expect(screen.getByText("→ Café & latte · Jus d'orange pressé")).toBeTruthy();
+    expect(screen.getByText("Café & latte · Jus d'orange pressé")).toBeTruthy();
     expect(screen.getByText('« Avec un café, vous avez le petit-déjeuner complet. »')).toBeTruthy();
   });
 
@@ -39,7 +39,18 @@ describe('VentesView', () => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Meer verkopen');
     expect(screen.getAllByRole('heading', { level: 2 }).map(h => h.textContent)).toEqual(['Formules', 'De juiste reflexen', 'Combinaties per product']);
     expect(screen.getByText('Ochtendformule')).toBeTruthy();
-    expect(screen.getByText('→ Koffie & latte · Versgeperst sinaasappelsap')).toBeTruthy();
+    expect(screen.getByText('Koffie & latte · Versgeperst sinaasappelsap')).toBeTruthy();
+  });
+
+  it('the arrow before each cross-sell list is visible but hidden from assistive technology', () => {
+    const { container } = renderVentes(0);
+    const cross = screen.getByText("Café & latte · Jus d'orange pressé");
+    expect(cross.textContent).toBe("→ Café & latte · Jus d'orange pressé");
+    const arrows = container.querySelectorAll('[aria-hidden="true"]');
+    expect(arrows).toHaveLength(BOOK.products.length);
+    for (const a of arrows) expect(a.textContent).toBe('→ ');
+    expect(cross.firstElementChild?.getAttribute('aria-hidden')).toBe('true');
+    expect(cross.firstElementChild?.textContent).toBe('→ ');
   });
 
   it('a product tile carries its name as title and opens the product sheet', () => {

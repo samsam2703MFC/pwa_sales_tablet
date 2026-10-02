@@ -4,11 +4,14 @@ import { LangToggle } from './LangToggle';
 import { isNavActive, navAria, navGroups } from './shell.logic';
 import s from './Sidebar.module.css';
 
-/** Landscape (≥ 1000 px) sticky left column: logo, grouped navigation, FR/NL toggle, sample-data note. */
-export function Sidebar() {
+/**
+ * Landscape (≥ 1000 px) sticky left column: logo, grouped navigation, FR/NL toggle, sample-data note.
+ * `inert` while the product sheet (modal) is open.
+ */
+export function Sidebar({ inert }: { inert?: boolean }) {
   const { state, lang, L, actions } = useApp();
   return (
-    <aside className={s.aside}>
+    <aside className={s.aside} inert={inert}>
       <div className={s.brand}>
         <img src={asset('img/logo.png')} alt="L'Atelier By" className={s.logo} />
         <div className={s.book}>{L.book}</div>

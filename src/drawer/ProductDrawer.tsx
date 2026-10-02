@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, type KeyboardEvent, type TouchEvent } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type TouchEvent } from 'react';
 import { PillRow, ProductPill } from '../components/ProductPill';
 import { PRODUCTS } from '../lib/catalog';
 import { useApp } from '../state/store';
@@ -15,9 +15,10 @@ const FOCUSABLE = 'button:not([disabled]), [href], input, select, textarea, [tab
 /**
  * Product sheet ("fiche produit"), shown above everything when a product is selected.
  * Landscape: right side panel min(640px,100%), full height, slides in from the right.
- * Portrait: bottom sheet 94vh with a handle, slides up.
+ * Portrait: bottom sheet 94dvh (94vh fallback) with a handle, slides up.
  * Closes on the scrim, the "Fermer" button, Escape, or a swipe on the header
- * (down > 70 px in portrait, right > 80 px in landscape).
+ * (down > 70 px in portrait, right > 80 px in landscape, that axis dominating:
+ * a diagonal scroll on the header does not close it).
  */
 export function ProductDrawer() {
   const { state } = useApp();
@@ -33,10 +34,13 @@ function Sheet() {
   const swipe = useRef<{ x: number; y: number } | null>(null);
   const uid = useId();
   const titleId = `${uid}-title`;
+  // The opener, read once while rendering: by the time an effect runs, the page behind is
+  // already inert (AppShell), which takes the focus away from it.
+  const [trigger] = useState(() => (document.activeElement instanceof HTMLElement ? document.activeElement : null));
 
-  // Open: Escape closes, background scroll is locked; on close, focus returns to the trigger.
+  // Open: Escape closes, background scroll is locked; on close, focus returns to the trigger
+  // (the page is no longer inert by then: React updates the DOM before running this cleanup).
   useEffect(() => {
-    const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const root = document.documentElement;
     const { overflow, scrollbarGutter } = root.style;
     // Desktop browsers with a classic scrollbar: keep its room so the page behind does not shift.
@@ -50,7 +54,7 @@ function Sheet() {
       root.style.scrollbarGutter = scrollbarGutter;
       if (trigger?.isConnected) trigger.focus({ preventScroll: true });
     };
-  }, [actions]);
+  }, [actions, trigger]);
 
   // Every product shown starts at the top of the sheet.
   useLayoutEffect(() => {
@@ -206,7 +210,8 @@ function Sheet() {
             <h3 className={s.eyebrow}>{L.also}</h3>
             <span className={s.crossLine}>« {vm.crossLine} »</span>
             <PillRow>
-              {vm.cross.map(m => <ProductPill key={m.id} p={m} size="lg" hover />)}
+              {/* Keyed by position: hand-entered data may repeat an id (duplicate keys left a stale pill on product switch). */}
+              {vm.cross.map((m, i) => <ProductPill key={i + '-' + m.id} p={m} size="lg" hover />)}
             </PillRow>
           </div>
         </div>

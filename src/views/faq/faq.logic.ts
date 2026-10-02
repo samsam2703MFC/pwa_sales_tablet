@@ -1,6 +1,6 @@
 import { BOOK } from '../../data/book';
 import type { Category, FaqItem, Lang } from '../../data/types';
-import { PRODUCTS, toCard, tr, type ProductCardVM } from '../../lib/catalog';
+import { cardsByIds, CATALOG, tr, type Catalog, type ProductCardVM } from '../../lib/catalog';
 import { labels } from '../../lib/i18n';
 
 /** FAQ filter chip: 'all' ("Tout" / "Alles") then every FAQ category, in data order. */
@@ -34,7 +34,13 @@ export const inFaqCat = (f: FaqItem, cat: string): boolean => cat === 'all' || f
  * The prototype's `faqItems`: questions of the picked category (all for 'all'),
  * in data order, keeping their BOOK.faq index; only `faqOpen` is open.
  */
-export const faqItems = (cat: string, faqOpen: number, lang: Lang, faq: readonly FaqItem[] = BOOK.faq): FaqItemVM[] =>
+export const faqItems = (
+  cat: string,
+  faqOpen: number,
+  lang: Lang,
+  faq: readonly FaqItem[] = BOOK.faq,
+  lk: Catalog = CATALOG,
+): FaqItemVM[] =>
   faq
     .map((f, index) => ({ f, index }))
     .filter(({ f }) => inFaqCat(f, cat))
@@ -47,6 +53,6 @@ export const faqItems = (cat: string, faqOpen: number, lang: Lang, faq: readonly
         open,
         sign: open ? '−' : '+',
         hasProds: !!f.p?.length,
-        prods: (f.p ?? []).filter(id => PRODUCTS[id]).map(id => toCard(PRODUCTS[id], lang)),
+        prods: cardsByIds(f.p ?? [], lang, lk),
       };
     });

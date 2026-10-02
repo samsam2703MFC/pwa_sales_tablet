@@ -2,6 +2,7 @@
   position: sticky;
   top: 0;
   height: 100vh;
+  height: 100dvh; /* visible height when a mobile browser toolbar is showing (vh = toolbar hidden) */
   box-sizing: border-box;
   padding: 28px 18px 20px;
   display: flex;
@@ -37,6 +38,10 @@
   gap: 22px;
   flex: 1;
   overflow-y: auto;
+  /* Room for the items' focus ring inside the scroller (overflow clips it); layout unchanged. */
+  padding: 4px;
+  margin: -4px;
+  scroll-padding-block: 4px; /* keyboard scroll-into-view keeps the ring's top and bottom visible */
 }
 
 .group {
@@ -87,4 +92,21 @@
   font-size: 13px;
   line-height: 1.5;
   color: var(--color-text-muted);
+}
+
+/* Touch screens: the nav overflows on landscape tablets (Onboarding hidden from 800 px down,
+   Statistiques too around 720–750 px) and overlay scrollbars are invisible at rest, so fade the
+   bottom of the nav to show it scrolls. The ::after spacer (+ the 22 px gap = 56 px) lets the
+   last entry clear the fade at the end of the scroll (a pseudo-element rather than
+   padding-bottom: older WebKit drops end padding in flex scrollers). Mouse/trackpad rendering
+   (pointer: fine) is unchanged, identical to the prototype. */
+@media (pointer: coarse) {
+  .nav {
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 56px), transparent);
+            mask-image: linear-gradient(to bottom, #000 calc(100% - 56px), transparent);
+  }
+  .nav::after {
+    content: '';
+    flex: 0 0 34px;
+  }
 }

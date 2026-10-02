@@ -34,6 +34,9 @@
   font-size: 15px;
   cursor: pointer;
   padding: 8px;
+  /* 44 px touch target; the negative margin keeps the header row 34 px tall. */
+  min-height: 44px;
+  margin-block: -5px;
 }
 
 /* Chips wrap here (unlike the scrolling filter rows). */

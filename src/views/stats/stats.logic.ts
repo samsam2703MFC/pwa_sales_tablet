@@ -1,8 +1,8 @@
 import { BOOK } from '../../data/book';
 import type { Lang, Period, PeriodStats, Seller, Stats } from '../../data/types';
-import { cardById, type ProductCardVM } from '../../lib/catalog';
+import { cardById, CATALOG, type Catalog, type ProductCardVM } from '../../lib/catalog';
 import { eur, eur2 } from '../../lib/format';
-import { dayNames, statsLabels } from '../../lib/i18n';
+import { dayNames, pair, statsLabels } from '../../lib/i18n';
 
 /**
  * Statistiques view model — the prototype's "stats" block of renderVals
@@ -15,22 +15,31 @@ export const selectedSellers = (sel: string, stats: Stats = BOOK.stats): Seller[
   sel === 'team' ? stats.sellers : stats.sellers.filter(x => x.id === sel);
 
 /**
+ * a / b, or 0 when there is nothing to divide by (a seller or a team with 0 tickets,
+ * a week without sales, an empty selection): never NaN on screen.
+ */
+const ratio = (a: number, b: number): number => (b > 0 ? a / b : 0);
+
+/**
  * Sum of the sellers' figures for the period. Cross-sell rate = average weighted
- * by tickets, rounded to the unit.
+ * by tickets, rounded to the unit (0 when there is no ticket).
  */
 export const aggregate = (list: readonly Seller[], per: Period): PeriodStats => {
   const tickets = list.reduce((a, x) => a + x[per].tickets, 0);
   return {
     ca: list.reduce((a, x) => a + x[per].ca, 0),
     tickets,
-    cross: Math.round(list.reduce((a, x) => a + x[per].cross * x[per].tickets, 0) / tickets),
+    cross: Math.round(ratio(list.reduce((a, x) => a + x[per].cross * x[per].tickets, 0), tickets)),
     saison: list.reduce((a, x) => a + x[per].saison, 0),
   };
 };
 
-/** Progress bar width in % of the objective, clamped to 4–100 (always a visible stub). */
+/**
+ * Progress bar width in % of the objective, clamped to 4–100 (always a visible stub).
+ * A zero objective is always reached (`value >= 0`): full bar.
+ */
 export const progressPct = (value: number, objective: number): number =>
-  Math.max(4, Math.min(100, Math.round((value / objective) * 100)));
+  objective > 0 ? Math.max(4, Math.min(100, Math.round((value / objective) * 100))) : 100;
 
 /** One KPI card. */
 export interface KpiVM {
@@ -103,7 +112,7 @@ export const kpiCards = (lang: Lang, sel: string, per: Period, stats: Stats = BO
   const g = aggregate(cur, per);
   const { obj } = stats;
   const objSaison = obj.saison[per] * cur.length;
-  const pan = g.ca / g.tickets;
+  const pan = ratio(g.ca, g.tickets);
   return [
     { id: 'ca', label: LS.ca, value: eur(g.ca, lang), sub: g.tickets + ' ' + LS.tk.toLowerCase(), pct: null, hit: null },
     { id: 'pan', label: LS.pan, value: eur2(pan), sub: LS.obj + ' ' + eur2(obj.panier), pct: progressPct(pan, obj.panier), hit: pan >= obj.panier },
@@ -115,13 +124,13 @@ export const kpiCards = (lang: Lang, sel: string, per: Period, stats: Stats = BO
   ];
 };
 
-/** Revenue of the last 7 days (Mon → Sun) summed over the selection; heights relative to the best day. */
+/** Revenue of the last 7 days (Mon → Sun) summed over the selection; heights relative to the best day (0 when no sales). */
 export const dayBars = (lang: Lang, sel: string, stats: Stats = BOOK.stats): DayBarVM[] => {
   const cur = selectedSellers(sel, stats);
   const values = [0, 1, 2, 3, 4, 5, 6].map(i => cur.reduce((a, x) => a + x.bars[i], 0));
   const max = Math.max(...values);
   const names = dayNames(lang);
-  return values.map((v, i) => ({ label: names[i], value: eur(v, lang), pct: Math.round((v / max) * 100), last: i === 6 }));
+  return values.map((v, i) => ({ label: names[i], value: eur(v, lang), pct: Math.round(ratio(v, max) * 100), last: i === 6 }));
 };
 
 /**
@@ -135,11 +144,11 @@ export const mergeTop = (list: readonly Seller[]): [string, number][] => {
 };
 
 /** "Les plus vendus": top 5 of the merged lists (unknown product ids are skipped). */
-export const topProducts = (lang: Lang, sel: string, stats: Stats = BOOK.stats): TopItemVM[] => {
+export const topProducts = (lang: Lang, sel: string, stats: Stats = BOOK.stats, lk: Catalog = CATALOG): TopItemVM[] => {
   const units = statsLabels(lang).units;
   return mergeTop(selectedSellers(sel, stats))
     .flatMap(([id, qty]) => {
-      const product = cardById(id, lang);
+      const product = cardById(id, lang, lk);
       return product ? [{ product, qty }] : [];
     })
     .slice(0, 5)
@@ -153,26 +162,27 @@ export const ranking = (lang: Lang, sel: string, per: Period, stats: Stats = BOO
     .map((x, i) => {
       const d = x[per];
       return {
-        id: x.id, rank: i + 1, name: x.name, ca: eur(d.ca, lang), pan: eur2(d.ca / d.tickets),
+        id: x.id, rank: i + 1, name: x.name, ca: eur(d.ca, lang), pan: eur2(ratio(d.ca, d.tickets)),
         cross: d.cross + ' %', crossHit: d.cross >= stats.obj.cross, saison: String(d.saison), on: sel === x.id,
       };
     });
 
 /** Whole view model. */
-export const statsView = (lang: Lang, sel: string, per: Period, stats: Stats = BOOK.stats): StatsVM => {
+export const statsView = (lang: Lang, sel: string, per: Period, stats: Stats = BOOK.stats, lk: Catalog = CATALOG): StatsVM => {
   const LS = statsLabels(lang);
   return {
     periods: LS.per.map(([id, label]) => ({ id, label, active: per === id })),
     sellers: [{ id: 'team', name: LS.team }, ...stats.sellers].map(x => ({ id: x.id, label: x.name, active: sel === x.id })),
     kpis: kpiCards(lang, sel, per, stats),
     days: dayBars(lang, sel, stats),
-    top: topProducts(lang, sel, stats),
+    top: topProducts(lang, sel, stats, lk),
     rank: ranking(lang, sel, per, stats),
   };
 };
 
 /** Accessible names not shown on screen (period group, seller chip group, rank column header). */
-export const statsA11y = (lang: Lang) =>
-  lang
-    ? { period: 'Periode', rankCol: 'Positie', sellers: 'Verkoopsters' }
-    : { period: 'Période', rankCol: 'Rang', sellers: 'Vendeuses' };
+const STATS_A11Y = pair(
+  { period: 'Période', rankCol: 'Rang', sellers: 'Vendeuses' },
+  { period: 'Periode', rankCol: 'Positie', sellers: 'Verkoopsters' },
+);
+export const statsA11y = (lang: Lang) => STATS_A11Y[lang];

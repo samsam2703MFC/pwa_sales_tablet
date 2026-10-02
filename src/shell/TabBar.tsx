@@ -14,12 +14,13 @@ const TABS: readonly (readonly [TabId, () => ReactNode])[] = [
 
 /**
  * Portrait fixed bottom tab bar: Accueil, La gamme, Allergènes, FAQ, Plus (toggles the sheet).
- * Inert while the sheet is open (the sheet covers it). `moreRef` receives the "Plus" button.
+ * Inert while the "Plus" sheet is open (the sheet covers it) or when `inert` is set (product
+ * sheet open). `moreRef` receives the "Plus" button.
  */
-export function TabBar({ moreRef }: { moreRef?: Ref<HTMLButtonElement> }) {
+export function TabBar({ moreRef, inert }: { moreRef?: Ref<HTMLButtonElement>; inert?: boolean }) {
   const { state, lang, actions } = useApp();
   return (
-    <nav className={s.bar} aria-label={navAria(lang)} inert={state.more}>
+    <nav className={s.bar} aria-label={navAria(lang)} inert={state.more || inert}>
       {TABS.map(([id, Icon]) => {
         const on = isTabActive(id, state.view, state.more);
         const isMore = id === 'more';

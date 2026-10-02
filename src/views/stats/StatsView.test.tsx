@@ -106,4 +106,15 @@ describe('StatsView', () => {
     fireEvent.click(within(rowOf(t, 'Laura')).getByRole('button'));
     expect(state().stSel).toBe('laura');
   });
+
+  it('empty selection (unknown seller id): zeros on screen, no NaN in text or bar sizes', () => {
+    const { container } = renderStats(0, { stSel: 'ghost' });
+    expect(container.textContent).not.toContain('NaN');
+    expect(container.innerHTML).not.toContain('NaN');
+    expect(screen.getByText('0,00 €')).toBeTruthy();
+    expect(screen.getByText('0 %')).toBeTruthy();
+    const sized = [...container.querySelectorAll<HTMLElement>('[style]')].map(el => el.style.width || el.style.height);
+    expect(sized.length).toBeGreaterThan(0);
+    for (const v of sized) expect(v).toMatch(/^\d+%$/);
+  });
 });

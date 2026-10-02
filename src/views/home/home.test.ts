@@ -1,75 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { BOOK } from '../../data/book';
 import { onbLabels } from '../../lib/i18n';
-import { bestSellers, homeModel, nextSeason, ONB_MODULES, quickAsks, seasonsNow, toSeasonVM } from './home.logic';
+import { FIXTURE_BOOK as F } from '../../test/fixtures';
+import { bestSellers, homeModel, ONB_MODULES, quickAsks } from './home.logic';
 
-/** month → [ids of the seasons of the moment, id of the next season], from the prototype rules. */
-const EXPECTED: Record<number, [string[], string]> = {
-  1: [['epiphanie'], 'valentin'],
-  2: [['valentin'], 'paques'],
-  3: [['paques'], 'meres'],
-  4: [['paques'], 'meres'],
-  5: [['meres'], 'ete'],
-  6: [['ete'], 'automne'],
-  7: [['ete'], 'automne'],
-  8: [['ete'], 'automne'],
-  9: [['automne'], 'stnicolas'],
-  10: [['automne'], 'stnicolas'],
-  11: [['automne', 'stnicolas'], 'noel'],
-  12: [['stnicolas', 'noel'], 'epiphanie'],
-};
-
-describe('season selection', () => {
-  for (let month = 1; month <= 12; month++) {
-    const [now, next] = EXPECTED[month];
-    it(`month ${month}: now = ${now.join(', ')}, next = ${next}`, () => {
-      expect(seasonsNow(month).map(x => x.id)).toEqual(now);
-      expect(nextSeason(month).id).toBe(next);
-    });
-  }
-
-  it('never proposes a running season as the next one', () => {
-    for (let month = 1; month <= 12; month++) {
-      expect(nextSeason(month).m).not.toContain(month);
-    }
-  });
-
-  it('wraps to the first season when nothing starts later in the year', () => {
-    expect(nextSeason(12)).toBe(BOOK.seasons[0]);
-  });
-});
-
-describe('season view model', () => {
-  const autumn = BOOK.seasons.find(x => x.id === 'automne')!;
-
-  it('is translated (FR / NL) and resolves the illustration', () => {
-    const fr = toSeasonVM(autumn, 0), nl = toSeasonVM(autumn, 1);
-    expect(fr.name).toBe('Automne');
-    expect(fr.dates).toBe('15 septembre au 30 novembre');
-    expect(fr.tip).toBe('Offre 4 + 1 sur la brioche croustillante.');
-    expect(nl.name).toBe('Herfst');
-    expect(nl.dates).toBe('15 september t/m 30 november');
-    expect(nl.tip).toBe('Actie 4 + 1 op de krokante brioche.');
-    expect(fr.img).toMatch(/img\/s\/autumn-range\.png$/);
-  });
-
-  it('lists the products of the season, in data order', () => {
-    const ids = BOOK.products.filter(p => p.season === 'automne').map(p => p.id);
-    expect(ids.length).toBeGreaterThan(0);
-    expect(toSeasonVM(autumn, 0).products.map(p => p.id)).toEqual(ids);
-  });
-});
+// Season selection and the season view model: src/lib/seasons.test.ts.
 
 describe('best sellers', () => {
-  it('keeps the products flagged best, in data order', () => {
-    expect(bestSellers(0).map(p => p.id)).toEqual(['croissant', 'pistolet', 'campagne', 'tarteriz', 'cookie', 'club']);
-  });
-
-  it('is translated, with formatted prices', () => {
-    const fr = bestSellers(0), nl = bestSellers(1);
-    expect(fr[0].name).toBe(BOOK.products.find(p => p.id === 'croissant')!.name[0]);
-    expect(nl[0].name).toBe(BOOK.products.find(p => p.id === 'croissant')!.name[1]);
-    expect(fr[0].price).toMatch(/^\d+,\d{2} €$/);
+  it('keeps the products flagged best, in data order, as translated cards', () => {
+    expect(bestSellers(0, F.products).map(p => [p.id, p.name, p.price])).toEqual([['p1', 'p1-fr', '2,50 €'], ['p3', 'p3-fr', '']]);
+    expect(bestSellers(1, F.products).map(p => p.name)).toEqual(['p1-nl', 'p3-nl']);
+    expect(bestSellers(0, [])).toEqual([]);
   });
 });
 
@@ -130,7 +71,12 @@ describe('onboarding banner', () => {
   });
 });
 
-describe('homeModel', () => {
+describe('sample data (prototype golden values)', () => {
+  it('best sellers', () => {
+    expect(bestSellers(0).map(p => p.id)).toEqual(['croissant', 'pistolet', 'campagne', 'tarteriz', 'cookie', 'club']);
+    expect(bestSellers(1)[0].name).toBe('Croissant met roomboter');
+  });
+
   it('assembles the home for October (FR)', () => {
     const m = homeModel(0, 10);
     expect(m.quick).toHaveLength(6);

@@ -1,8 +1,8 @@
 import { BOOK } from '../../data/book';
 import type { Lang, Product, Season } from '../../data/types';
-import { asset } from '../../lib/asset';
-import { toCard, tr, type ProductCardVM } from '../../lib/catalog';
+import { tr } from '../../lib/catalog';
 import { monthNames } from '../../lib/i18n';
+import { toSeasonVM, type SeasonVM } from '../../lib/seasons';
 
 /** Calendar column header: short month name, highlighted for the current month. */
 export interface MonthHeaderVM {
@@ -38,17 +38,9 @@ export const calendarRows = (lang: Lang, month: number, seasons: readonly Season
   }));
 
 /** Season card (the prototype's `sc()`): illustration, dates, instruction and products. */
-export interface SeasonCardVM {
-  id: string;
-  name: string;
-  /** Resolved illustration URL. */
-  img: string;
-  dates: string;
-  tip: string;
+export interface SeasonCardVM extends SeasonVM {
   /** Running during the current month → "En ce moment" badge. */
   isNow: boolean;
-  /** Products of that season, in data order. */
-  products: ProductCardVM[];
 }
 
 export const seasonCards = (
@@ -56,13 +48,4 @@ export const seasonCards = (
   month: number,
   seasons: readonly Season[] = BOOK.seasons,
   products: readonly Product[] = BOOK.products,
-): SeasonCardVM[] =>
-  seasons.map(x => ({
-    id: x.id,
-    name: tr(x.n, lang),
-    img: asset(x.img),
-    dates: tr(x.dates, lang),
-    tip: tr(x.tip, lang),
-    isNow: x.m.includes(month),
-    products: products.filter(p => p.season === x.id).map(p => toCard(p, lang)),
-  }));
+): SeasonCardVM[] => seasons.map(x => ({ ...toSeasonVM(x, lang, products), isNow: x.m.includes(month) }));

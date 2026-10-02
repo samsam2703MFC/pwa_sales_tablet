@@ -27,11 +27,15 @@ const parseLang = (v: string | null | undefined): Lang | null => {
   return v.toUpperCase() === 'NL' ? 1 : v.toUpperCase() === 'FR' ? 0 : null;
 };
 
+/** 'YYYY-MM-DD' → that day at local noon, or null when malformed or impossible. */
 const parseDate = (v: string | null | undefined): Date | null => {
   const m = v && /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
   if (!m) return null;
-  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12);
-  return Number.isNaN(d.getTime()) ? null : d;
+  const [y, mo, da] = [m[1], m[2], m[3]].map(Number);
+  const d = new Date(y, mo - 1, da, 12);
+  // Date rolls 2026-02-30 over to 2 March and maps years 0–99 to 19xx: reject anything
+  // that does not round-trip, so a mistyped URL falls back to the device clock.
+  return d.getFullYear() === y && d.getMonth() === mo - 1 && d.getDate() === da ? d : null;
 };
 
 export function readConfig(search: string, env: Record<string, string | undefined>): AppConfig {

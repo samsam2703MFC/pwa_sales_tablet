@@ -53,9 +53,13 @@ export const transitions = {
   go: (view: View, extra?: Partial<AppState>) => (): Partial<AppState> => ({
     view, q: '', sel: null, stack: [], more: false, onbMod: -1, ...extra,
   }),
-  /** Open a product; pushes the current one on the back stack. */
+  /**
+   * Open a product; pushes the current one on the back stack. Also closes the "Plus"
+   * sheet: one left open in portrait is only hidden in landscape, and would otherwise
+   * come back on top of (and under) the product sheet when the tablet rotates back.
+   */
   openProduct: (id: string) => (s: AppState): Partial<AppState> => ({
-    sel: id, selFaq: -1, stack: s.sel && s.sel !== id ? [...s.stack, s.sel] : s.stack,
+    sel: id, selFaq: -1, more: false, stack: s.sel && s.sel !== id ? [...s.stack, s.sel] : s.stack,
   }),
   closeProduct: () => (): Partial<AppState> => ({ sel: null, stack: [] }),
   back: () => (s: AppState): Partial<AppState> =>
@@ -104,9 +108,8 @@ export interface AppContextValue {
   lang: Lang;
   /** Interface labels in the current language. */
   L: Labels;
-  /** Window width < 1000 px → portrait layout (tab bar, bottom sheets). */
+  /** Layout viewport narrower than 1000 px → portrait layout (tab bar, bottom sheets). */
   compact: boolean;
-  width: number;
 }
 
 export const AppContext = createContext<AppContextValue | null>(null);

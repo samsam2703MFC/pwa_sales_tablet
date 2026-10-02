@@ -5,7 +5,8 @@ import { asset } from '../../lib/asset';
 import { currentMonth } from '../../lib/date';
 import { onbLabels } from '../../lib/i18n';
 import { useApp } from '../../state/store';
-import { homeModel, ONB_MODULES, type SeasonVM } from './home.logic';
+import type { SeasonVM } from '../../lib/seasons';
+import { homeModel, ONB_MODULES } from './home.logic';
 import s from './HomeView.module.css';
 
 /**

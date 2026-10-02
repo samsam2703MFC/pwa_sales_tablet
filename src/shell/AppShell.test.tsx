@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { BOOK } from '../data/book';
 import type { Lang } from '../data/types';
 import { AppProvider, useApp, type AppState } from '../state/store';
 import { AppShell } from './AppShell';
@@ -12,17 +14,29 @@ const state = (): AppState => JSON.parse(screen.getByTestId('state').textContent
 
 const setWidth = (w: number) => Object.defineProperty(window, 'innerWidth', { configurable: true, value: w });
 
-const renderShell = (width: number, lang: Lang = 0, initial: Partial<AppState> = {}) => {
+const renderShell = (width: number, lang: Lang = 0, initial: Partial<AppState> = {}, page: ReactNode = <p>page</p>) => {
   setWidth(width);
   return render(
     <AppProvider initial={{ lang, ...initial }}>
-      <AppShell><p>page</p></AppShell>
+      <AppShell>{page}</AppShell>
       <Probe />
     </AppProvider>,
   );
 };
 
 const btn = (name: string) => screen.getByRole('button', { name });
+/** The search results status (the Probe's <output> also has the status role). */
+const resultsStatus = () => within(document.querySelector('header')!).getByRole('status');
+/** Visible children of the header row (the results status is screen-reader only). */
+const headerItems = () => [...document.querySelector('header')!.children].filter(c => !c.classList.contains('sr-only'));
+
+/** Stand-in pages: the home page has a tile that leaves it (like "Le client demande…"), the others a title. */
+function Pages() {
+  const { state, actions } = useApp();
+  return state.view === 'home'
+    ? <button type="button" onClick={() => actions.go('al', { ex: ['gluten'] })}>tile</button>
+    : <h1>title {state.view}</h1>;
+}
 
 beforeEach(() => {
   window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
@@ -40,7 +54,7 @@ describe('AppShell — landscape (≥ 1000 px)', () => {
     expect(screen.getByText('page')).toBeTruthy();
     expect(screen.getByText("Données d'exemple — à remplacer par les fiches produit officielles.")).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Plus' })).toBeNull();
-    expect(document.querySelector('header')!.children).toHaveLength(2); // search field + date
+    expect(headerItems()).toHaveLength(2); // search field + date
   });
 
   it('navigates and moves the active item', () => {
@@ -80,6 +94,81 @@ describe('AppShell — landscape (≥ 1000 px)', () => {
     expect(document.activeElement).not.toBe(input);
   });
 
+  it('the keyboard "Search" key (Enter) closes the keyboard (blur) and keeps the query', () => {
+    renderShell(1280);
+    const input = screen.getByRole('textbox') as HTMLInputElement;
+    expect(input.getAttribute('enterkeyhint')).toBe('search');
+    input.focus();
+    fireEvent.change(input, { target: { value: 'pain' } });
+    // While an IME composition is in progress, Enter confirms the composition: no blur.
+    fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
+    expect(document.activeElement).toBe(input);
+    fireEvent.keyDown(input, { key: 'a' });
+    expect(document.activeElement).toBe(input);
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(document.activeElement).not.toBe(input);
+    expect(input.value).toBe('pain');
+    expect(state().q).toBe('pain');
+  });
+
+  it('announces the number of results in a status that is always there', () => {
+    renderShell(1280);
+    const status = resultsStatus();
+    expect(status.textContent).toBe('');
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'cro' } });
+    expect(resultsStatus()).toBe(status);
+    expect(status.textContent).toBe('9 produits, 1 question');
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'gluten' } });
+    expect(status.textContent).toMatch(/^\d+ produits, \d+ questions?$/);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'croz' } });
+    expect(status.textContent).toBe('Aucun résultat.');
+    fireEvent.click(btn('Effacer'));
+    expect(status.textContent).toBe('');
+  });
+
+  it('announces the results in NL', () => {
+    renderShell(1280, 1);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'cro' } });
+    expect(resultsStatus().textContent).toBe('9 producten, 1 vraag');
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'croz' } });
+    expect(resultsStatus().textContent).toBe('Geen resultaten.');
+  });
+
+  it('after a section change, focus goes to the new page title when its trigger went away', () => {
+    renderShell(1280, 0, {}, <Pages />);
+    const tile = btn('tile');
+    tile.focus();
+    fireEvent.click(tile);
+    expect(state()).toMatchObject({ view: 'al', ex: ['gluten'] });
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(document.activeElement).toBe(h1);
+    expect(h1.tabIndex).toBe(-1);
+    // A sidebar item keeps its focus.
+    const item = btn('La gamme');
+    item.focus();
+    fireEvent.click(item);
+    expect(state().view).toBe('gamme');
+    expect(document.activeElement).toBe(item);
+  });
+
+  it('makes the sidebar and the page inert while the product sheet is open', () => {
+    renderShell(1280, 0, { sel: BOOK.products[0].id });
+    const main = screen.getByRole('main');
+    const aside = document.querySelector('aside')!;
+    expect(main.hasAttribute('inert')).toBe(true);
+    expect(aside.hasAttribute('inert')).toBe(true);
+    expect(screen.getByRole('dialog').closest('[inert]')).toBeNull();
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Fermer' }));
+    expect(main.hasAttribute('inert')).toBe(false);
+    expect(aside.hasAttribute('inert')).toBe(false);
+  });
+
+  it('an unknown selected id opens nothing and leaves the page usable', () => {
+    renderShell(1280, 0, { sel: 'nope' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByRole('main').hasAttribute('inert')).toBe(false);
+  });
+
   it('switches language (labels, pressed state, document lang)', () => {
     renderShell(1280);
     expect(btn('FR').getAttribute('aria-pressed')).toBe('true');
@@ -102,7 +191,7 @@ describe('AppShell — portrait (< 1000 px)', () => {
     expect(screen.queryByRole('complementary')).toBeNull();
     expect(tabs().map(b => b.textContent)).toEqual(['Accueil', 'La gamme', 'Allergènes', 'FAQ', 'Plus']);
     expect(tabs()[0].getAttribute('aria-current')).toBe('page');
-    expect(document.querySelector('header')!.children).toHaveLength(1);
+    expect(headerItems()).toHaveLength(1);
     expect(screen.getByText('Book vendeuses')).toBeTruthy();
   });
 
@@ -138,6 +227,17 @@ describe('AppShell — portrait (< 1000 px)', () => {
     expect(main.hasAttribute('inert')).toBe(true);
     expect(bar.hasAttribute('inert')).toBe(true);
     expect(screen.getByRole('dialog').hasAttribute('inert')).toBe(false);
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(main.hasAttribute('inert')).toBe(false);
+    expect(bar.hasAttribute('inert')).toBe(false);
+  });
+
+  it('makes the page and the tab bar inert while the product sheet is open', () => {
+    renderShell(820, 0, { sel: BOOK.products[0].id });
+    const main = screen.getByRole('main', { hidden: true });
+    const bar = document.querySelector('nav')!;
+    expect(main.hasAttribute('inert')).toBe(true);
+    expect(bar.hasAttribute('inert')).toBe(true);
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(main.hasAttribute('inert')).toBe(false);
     expect(bar.hasAttribute('inert')).toBe(false);

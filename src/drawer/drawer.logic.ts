@@ -1,6 +1,6 @@
 import { BOOK } from '../data/book';
-import type { Allergen, FaqItem, Lang, Product } from '../data/types';
-import { CATEGORIES, PRODUCTS, SEASONS, toCard, tr, type ProductCardVM } from '../lib/catalog';
+import type { Allergen, BookData, FaqItem, Lang, Product, Season } from '../data/types';
+import { cardsByIds, catalogOf, PRODUCTS, SEASONS, toCard, tr, type Lookup, type ProductCardVM } from '../lib/catalog';
 import { dlcLabel } from '../lib/format';
 import { labels } from '../lib/i18n';
 
@@ -45,8 +45,8 @@ export interface SheetVM extends ProductCardVM {
 }
 
 /** "Toute l'année" / "Het hele jaar", or "Season name · dates" for a seasonal product. */
-export const availability = (p: Product, lang: Lang): string => {
-  const season = p.season ? SEASONS[p.season] : undefined;
+export const availability = (p: Product, lang: Lang, seasons: Lookup<Season> = SEASONS): string => {
+  const season = p.season ? seasons[p.season] : undefined;
   return season ? tr(season.n, lang) + ' · ' + tr(season.dates, lang) : labels(lang).allYear;
 };
 
@@ -72,31 +72,33 @@ export const productFaq = (id: string, selFaq: number, lang: Lang, faq: readonly
     });
 
 /** Name of the product the "←" button goes back to (top of the stack), '' when the stack is empty. */
-export const backName = (stack: readonly string[], lang: Lang): string => {
+export const backName = (stack: readonly string[], lang: Lang, products: Lookup<Product> = PRODUCTS): string => {
   const id = stack[stack.length - 1];
-  return id && PRODUCTS[id] ? tr(PRODUCTS[id].name, lang) : '';
+  return tr(id ? products[id]?.name : null, lang);
 };
 
 /** Builds the sheet of product `id`, or null when nothing (or an unknown id) is selected. */
-export const sheetVM = (id: string | null, selFaq: number, lang: Lang): SheetVM | null => {
-  const x = id ? PRODUCTS[id] : undefined;
+export const sheetVM = (id: string | null, selFaq: number, lang: Lang, book: BookData = BOOK): SheetVM | null => {
+  const lk = catalogOf(book);
+  const x = id ? lk.products[id] : undefined;
   if (!x) return null;
   return {
-    ...toCard(x, lang),
-    cat: tr(CATEGORIES[x.cat]?.n, lang),
+    ...toCard(x, lang, lk),
+    cat: tr(lk.categories[x.cat]?.n, lang),
     desc: tr(x.desc, lang),
     pitch: tr(x.pitch, lang),
     ingr: tr(x.ingr, lang),
     keep: tr(x.keep, lang),
     dlc: dlcLabel(x.dlc, labels(lang)),
     crossLine: tr(x.crossLine, lang),
-    avail: availability(x, lang),
-    grid: allergenGrid(x, lang),
-    faq: productFaq(x.id, selFaq, lang),
-    cross: x.cross.filter(c => PRODUCTS[c]).map(c => toCard(PRODUCTS[c], lang)),
+    avail: availability(x, lang, lk.seasons),
+    grid: allergenGrid(x, lang, book.allergens),
+    faq: productFaq(x.id, selFaq, lang, book.faq),
+    // A repeated id gives a repeated pill, as in the prototype.
+    cross: cardsByIds(x.cross, lang, lk),
   };
 };
 
-/** Swipe-to-close on the sheet header: down > 70 px (portrait sheet) or right > 80 px (side panel). */
+/** Swipe-to-close on the sheet header: down > 70 px (portrait sheet) or right > 80 px (side panel), the swipe axis dominating (a diagonal scroll gesture does not close). */
 export const isCloseSwipe = (compact: boolean, dx: number, dy: number): boolean =>
-  compact ? dy > 70 : dx > 80;
+  compact ? dy > 70 && dy > Math.abs(dx) : dx > 80 && dx > Math.abs(dy);

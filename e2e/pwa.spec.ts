@@ -44,7 +44,6 @@ test.describe('installable PWA', () => {
       name: "Book vendeuses — L'Atelier By",
       short_name: 'Book vendeuses',
       lang: 'fr',
-      id: './',
       start_url: '.',
       scope: '.',
       display: 'standalone',
@@ -52,6 +51,9 @@ test.describe('installable PWA', () => {
       theme_color: '#EAE4DC',
       background_color: '#EAE4DC',
     });
+    // No explicit id: the identity is start_url, i.e. the folder the app is served from
+    // (a relative id would resolve against the origin, see vite.config.ts and subpath.spec.ts).
+    expect(manifest).not.toHaveProperty('id');
     expect(manifest.description).toContain('hors connexion');
     expect(manifest.categories).toEqual(expect.arrayContaining(['business', 'food']));
 
@@ -87,7 +89,7 @@ test.describe('installable PWA', () => {
     const cdp = await page.context().newCDPSession(page);
     const { errors, manifest } = await cdp.send('Page.getAppManifest');
     expect(errors).toEqual([]);
-    // The explicit id ('./') resolves to the app root, like start_url.
+    // The id defaults to start_url: the folder the app is served from (here the domain root).
     expect(manifest.id).toBe(new URL('/', page.url()).href);
     expect(manifest.startUrl).toBe(new URL('/', page.url()).href);
     const { installabilityErrors } = await cdp.send('Page.getInstallabilityErrors');

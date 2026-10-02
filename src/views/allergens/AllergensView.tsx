@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react';
+import { useId, useMemo, useRef } from 'react';
 import { PageTitle } from '../../components/PageTitle';
 import { useApp } from '../../state/store';
 import { alA11y, allergenMatrix } from './allergens.logic';
@@ -16,6 +16,12 @@ export function AllergensView() {
   const m = useMemo(() => allergenMatrix(lang, state.ex), [lang, state.ex]);
   const a11y = alA11y(lang);
   const introId = useId();
+  const chipsRef = useRef<HTMLDivElement>(null);
+  /** The button goes away once nothing is excluded: focus moves to the first chip instead of <body>. */
+  const reset = () => {
+    actions.resetEx();
+    chipsRef.current?.querySelector('button')?.focus({ preventScroll: true });
+  };
 
   return (
     <section className={s.page}>
@@ -25,10 +31,10 @@ export function AllergensView() {
         <div className={s.filterHead}>
           <span id={introId} className={s.intro}>{L.alIntro}</span>
           {m.hasEx && (
-            <button type="button" className={s.reset} onClick={actions.resetEx}>{L.alReset}</button>
+            <button type="button" className={s.reset} onClick={reset}>{L.alReset}</button>
           )}
         </div>
-        <div className={s.chips} role="group" aria-labelledby={introId}>
+        <div ref={chipsRef} className={s.chips} role="group" aria-labelledby={introId}>
           {m.chips.map(c => (
             <button
               key={c.id}

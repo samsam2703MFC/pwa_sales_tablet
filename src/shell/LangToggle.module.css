@@ -6,6 +6,7 @@
 }
 
 .btn {
+  position: relative;
   border: none;
   border-radius: var(--radius-pill);
   background: transparent;
@@ -13,6 +14,13 @@
   font-family: var(--font-ui);
   font-size: 15px;
   cursor: pointer;
+}
+
+/* Invisible hit extension into the track padding (4 px) and half the gap (2 px): 44 / 48 px touch targets. */
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: -4px -2px;
 }
 
 .active {

@@ -2,9 +2,11 @@
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  /* Room for the chips' focus ring, which overflow would otherwise clip; layout unchanged. */
-  padding-block: 4px;
-  margin-block: -4px;
+  /* Room for the chips' focus ring, which overflow would otherwise clip; layout unchanged.
+     No negative right margin: at rest, the right edge where an overflowing row is cut stays put. */
+  padding: 4px;
+  margin: -4px 0 -4px -4px;
+  scroll-padding-inline: 4px;
 }
 
 .chip {

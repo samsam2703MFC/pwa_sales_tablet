@@ -25,6 +25,8 @@
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   overflow-y: auto;
+  /* Keyboard scroll-into-view keeps the focus ring of the last pill visible. */
+  scroll-padding-bottom: 8px;
   background: var(--color-surface);
   box-shadow: var(--shadow-drawer);
   display: flex;
@@ -38,6 +40,7 @@
 .compact .panel {
   width: 100%;
   height: 94vh;
+  height: 94dvh; /* visible height when a mobile browser toolbar is showing (vh = toolbar hidden) */
   border-radius: 20px 20px 0 0;
   animation: global(sheetUp) 280ms var(--ease-sheet);
 }

@@ -35,8 +35,11 @@ const LABELS = [
 export type Labels = { [K in keyof (typeof LABELS)[0]]: string };
 export const labels = (lang: Lang): Labels => LABELS[lang];
 
+/** FR/NL pair whose NL entry must have exactly the FR keys (missing → TS2345, extra → TS2353). */
+export const pair = <T extends object>(fr: T, nl: NoInfer<T>): readonly [T, T] => [fr, nl];
+
 /** Statistics labels. */
-const STATS_LABELS = [
+const STATS_LABELS = pair(
   {
     ca: "Chiffre d'affaires", tk: 'Tickets', pan: 'Panier moyen', cross: 'Vente additionnelle', sais: 'Produits de saison', obj: 'Objectif', team: 'Équipe',
     per: [['day', "Aujourd'hui"], ['week', 'Cette semaine'], ['month', 'Ce mois']] as [Period, string][],
@@ -49,12 +52,12 @@ const STATS_LABELS = [
     rank: 'Teamoverzicht', top: 'Meest verkocht', days: '7 laatste dagen', reached: 'Gehaald', toGo: 'Nog te gaan', units: 'st.', seller: 'Verkoopster',
     title: 'Statistieken', note: 'Voorbeeldcijfers — te koppelen aan de kassa.',
   },
-];
+);
 export type StatsLabels = (typeof STATS_LABELS)[0];
 export const statsLabels = (lang: Lang): StatsLabels => STATS_LABELS[lang];
 
 /** Onboarding labels. */
-const ONB_LABELS = [
+const ONB_LABELS = pair(
   {
     rule: 'La règle', scripts: 'À dire à voix haute', exo: 'Exercice', readMin: '1 min de lecture', full: 'Lire le module complet', short: 'Revenir à la version courte',
     fullTag: 'Version complète', title: 'Onboarding', intro: 'Votre formation vente, module par module. À suivre dans l’ordre, en réunion d’équipe.',
@@ -67,7 +70,7 @@ const ONB_LABELS = [
     back: 'Alle modules', prev: 'Vorige', next: 'Volgende', bad: 'Niet zo', good: 'Wel zo',
     homeT: (n: number) => `Verkoopopleiding in ${n} modules · 1 min lezen per module`,
   },
-];
+);
 export type OnbLabels = (typeof ONB_LABELS)[0];
 export const onbLabels = (lang: Lang): OnbLabels => ONB_LABELS[lang];
 

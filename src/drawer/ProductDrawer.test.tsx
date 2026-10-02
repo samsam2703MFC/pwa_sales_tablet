@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Lang } from '../data/types';
+import { PRODUCTS } from '../lib/catalog';
 import { AppProvider, useApp, type AppState } from '../state/store';
 import { ProductDrawer } from './ProductDrawer';
 
@@ -23,6 +24,7 @@ const renderDrawer = (lang: Lang = 0, initial: Partial<AppState> = {}, width = 1
   return render(
     <AppProvider initial={{ lang, ...initial }}>
       <Opener id="croissant" />
+      <Opener id="painslait" />
       <ProductDrawer />
       <Probe />
     </AppProvider>,
@@ -190,6 +192,10 @@ describe('ProductDrawer', () => {
     fireEvent.touchStart(header(), { touches: [{ clientX: 700, clientY: 30 }] });
     fireEvent.touchEnd(header(), { changedTouches: [{ clientX: 700, clientY: 200 }] });
     expect(screen.queryByRole('dialog')).not.toBeNull();
+    // Diagonal scroll on the sticky header (mostly vertical, some rightward drift): stays open.
+    fireEvent.touchStart(header(), { touches: [{ clientX: 700, clientY: 30 }] });
+    fireEvent.touchEnd(header(), { changedTouches: [{ clientX: 790, clientY: 280 }] });
+    expect(screen.queryByRole('dialog')).not.toBeNull();
     fireEvent.touchStart(header(), { touches: [{ clientX: 700, clientY: 30 }] });
     fireEvent.touchEnd(header(), { changedTouches: [{ clientX: 790, clientY: 30 }] });
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -205,6 +211,26 @@ describe('ProductDrawer', () => {
     fireEvent.touchEnd(header(), { changedTouches: [{ clientX: 200, clientY: 180 }] });
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(state()).toMatchObject({ sel: null, stack: [] });
+  });
+
+  it('a repeated cross-sell id (data typo) shows a repeated pill and leaves no stale pill on product switch', () => {
+    const croissant = PRODUCTS.croissant!, painslait = PRODUCTS.painslait!;
+    const saved = [croissant.cross, painslait.cross];
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      croissant.cross = ['cafe', 'jus', 'cafe'];
+      painslait.cross = ['jus', 'cafe'];
+      renderDrawer(0, { sel: 'croissant' });
+      const pills = () => within(dialog()).getAllByRole('button').map(b => b.textContent).filter(t => t?.includes('€'));
+      expect(pills()).toEqual(['Café & latte2,80 €', "Jus d'orange pressé3,90 €", 'Café & latte2,80 €']);
+      fireEvent.click(screen.getByRole('button', { name: 'open painslait' }));
+      expect(state().sel).toBe('painslait');
+      expect(pills()).toEqual(["Jus d'orange pressé3,90 €", 'Café & latte2,80 €']);
+      expect(error.mock.calls.filter(c => String(c[0]).includes('same key'))).toEqual([]);
+    } finally {
+      [croissant.cross, painslait.cross] = saved;
+      error.mockRestore();
+    }
   });
 
   it('side panel has no handle', () => {

@@ -1,5 +1,5 @@
 import { BOOK } from '../../data/book';
-import type { BookData, FaqItem, Product, T2 } from '../../data/types';
+import type { BookData, FaqItem, Lang, Product, T2 } from '../../data/types';
 
 /**
  * Global search (prototype `renderVals()` → qProducts / qFaq).
@@ -31,3 +31,14 @@ export function search(rawQ: string, book: BookData = BOOK): SearchResults {
   const faq = book.faq.map((f, i) => ({ f, i })).filter(({ f }) => hit(f.q, q) || hit(f.a, q));
   return { products, faq };
 }
+
+/**
+ * Screen-reader summary of the results ("3 produits, 1 question" / "3 producten, 1 vraag"),
+ * `noRes` when nothing matches. Announced by the always-mounted status of the search bar.
+ */
+export const resultsSummary = ({ products: p, faq: f }: SearchResults, lang: Lang, noRes: string): string =>
+  !p.length && !f.length
+    ? noRes
+    : lang
+      ? `${p.length} ${p.length === 1 ? 'product' : 'producten'}, ${f.length} ${f.length === 1 ? 'vraag' : 'vragen'}`
+      : `${p.length} produit${p.length > 1 ? 's' : ''}, ${f.length} question${f.length > 1 ? 's' : ''}`;

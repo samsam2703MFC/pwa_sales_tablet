@@ -1,13 +1,12 @@
 import { BOOK } from '../../data/book';
 import type { Combo, Lang, Product, T2 } from '../../data/types';
-import { PRODUCTS, toCard, tr, type ProductCardVM } from '../../lib/catalog';
+import { cardsByIds, CATALOG, knownProducts, tr, type Catalog, type ProductCardVM } from '../../lib/catalog';
 import { fmtPrice } from '../../lib/format';
-
-/** Known products only (unknown ids are skipped instead of crashing). */
-const known = (ids: readonly string[]): Product[] => ids.flatMap(id => (PRODUCTS[id] ? [PRODUCTS[id]] : []));
 
 /** A "Formule" card: name, time slot, formatted price ('' when none) and its product tiles. */
 export interface ComboVM {
+  /** Stable React key (data index): the same in FR and NL. */
+  id: string;
   name: string;
   when: string;
   price: string;
@@ -15,12 +14,14 @@ export interface ComboVM {
 }
 
 /** The prototype's `combos`. */
-export const combos = (lang: Lang, data: readonly Combo[] = BOOK.combos, showPrices?: boolean): ComboVM[] =>
-  data.map(c => ({
+export const combos = (lang: Lang, data: readonly Combo[] = BOOK.combos, showPrices?: boolean, lk: Catalog = CATALOG): ComboVM[] =>
+  data.map((c, i) => ({
+    id: String(i),
     name: tr(c.n, lang),
     when: tr(c.when, lang),
     price: fmtPrice(c.price, showPrices),
-    items: known(c.items).map(p => toCard(p, lang)),
+    // A product listed twice ("2 croissants + café") gives two tiles.
+    items: cardsByIds(c.items, lang, lk),
   }));
 
 /** A "bon réflexe": its 1-based number and text. */
@@ -44,10 +45,10 @@ export interface PairVM {
 }
 
 /** The prototype's `pairs`: every product, in data order. */
-export const pairs = (lang: Lang, products: readonly Product[] = BOOK.products): PairVM[] =>
+export const pairs = (lang: Lang, products: readonly Product[] = BOOK.products, lk: Catalog = CATALOG): PairVM[] =>
   products.map(x => ({
     id: x.id,
     name: tr(x.name, lang),
-    cross: known(x.cross).map(p => tr(p.name, lang)).join(' · '),
+    cross: knownProducts(x.cross, lk.products).map(p => tr(p.name, lang)).join(' · '),
     line: tr(x.crossLine, lang),
   }));

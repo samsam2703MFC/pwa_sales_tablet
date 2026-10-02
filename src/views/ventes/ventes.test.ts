@@ -1,10 +1,65 @@
 import { describe, expect, it } from 'vitest';
 import { BOOK } from '../../data/book';
-import type { Product } from '../../data/types';
+import { FIXTURE_BOOK as F, FIXTURE_CATALOG as LK, product } from '../../test/fixtures';
 import { combos, pairs, reflexes } from './ventes.logic';
 
 describe('combos', () => {
-  it('lists the 4 formulas with slot, formatted price and product tiles (FR)', () => {
+  it('name, slot, formatted price ("" when none) and product tiles, in data order', () => {
+    const c = combos(0, F.combos, true, LK);
+    expect(c.map(x => [x.name, x.when, x.price])).toEqual([['Formule un', 'matin', '3,90 €'], ['Formule deux', 'soir', '']]);
+    expect(c[0].items.map(p => [p.id, p.name, p.img])).toEqual([
+      ['p1', 'p1-fr', '/img/p/p1.png'], ['p1', 'p1-fr', '/img/p/p1.png'], ['p5', 'p5-fr', '/img/p/p5.png'],
+    ]);
+    expect(c[1].items).toEqual([]);
+  });
+
+  it('a product listed twice gives two tiles; unknown ids are skipped', () => {
+    expect(combos(0, F.combos, true, LK)[0].items.map(p => p.id)).toEqual(['p1', 'p1', 'p5']);
+  });
+
+  it('is translated (NL)', () => {
+    const c = combos(1, F.combos, true, LK);
+    expect(c.map(x => [x.name, x.when])).toEqual([['Formule een', 'ochtend'], ['Formule twee', 'avond']]);
+    expect(c[0].items.map(p => p.name)).toEqual(['p1-nl', 'p1-nl', 'p5-nl']);
+  });
+
+  it('hides every price when prices are switched off', () => {
+    expect(combos(0, F.combos, false, LK).map(x => x.price)).toEqual(['', '']);
+  });
+
+  it('stable ids (data index), the same in FR and NL', () => {
+    expect(combos(0, F.combos, true, LK).map(c => c.id)).toEqual(['0', '1']);
+    expect(combos(1, F.combos, true, LK).map(c => c.id)).toEqual(['0', '1']);
+    const twins = [F.combos[0], F.combos[0]];
+    expect(new Set(combos(0, twins, true, LK).map(c => c.id)).size).toBe(2); // same name, distinct keys
+  });
+});
+
+describe('reflexes', () => {
+  it('numbers the reflexes from 1, in data order, translated', () => {
+    expect(reflexes(0, F.reflexes)).toEqual([{ n: '1', text: 'Réflexe un' }, { n: '2', text: 'Réflexe deux' }]);
+    expect(reflexes(1, F.reflexes).map(r => r.text)).toEqual(['Reflex een', 'Reflex twee']);
+  });
+});
+
+describe('pairs', () => {
+  it('one row per product, in data order', () => {
+    expect(pairs(0, F.products, LK).map(r => r.id)).toEqual(['p1', 'p2', 'p3', 'p4', 'p5']);
+  });
+
+  it('joins the cross-sell names with " · ", skips unknown ids, keeps the sentence (FR / NL)', () => {
+    expect(pairs(0, F.products, LK)[0]).toEqual({ id: 'p1', name: 'p1-fr', cross: 'p2-fr', line: 'Avec une tarte ?' });
+    expect(pairs(1, F.products, LK)[0]).toEqual({ id: 'p1', name: 'p1-nl', cross: 'p2-nl', line: 'Met een taart?' });
+    expect(pairs(0, F.products, LK)[3].cross).toBe('p1-fr · p1-fr');
+  });
+
+  it('no cross-sell → empty string', () => {
+    expect(pairs(0, [product('x')], LK)[0].cross).toBe('');
+  });
+});
+
+describe('sample data (prototype golden values)', () => {
+  it('the 4 formulas (FR)', () => {
     const c = combos(0, BOOK.combos, true);
     expect(c.map(x => x.name)).toEqual(['Formule matin', 'Formule midi', 'Pause goûter', 'Brunch du dimanche']);
     expect(c.map(x => x.when)).toEqual(['7 h – 11 h', '11 h 30 – 14 h', '15 h – 18 h', 'Week-end']);
@@ -19,63 +74,32 @@ describe('combos', () => {
     expect(c[0].items[0].img).toMatch(/img\/p\/croissant\.png$/);
   });
 
-  it('is translated (NL)', () => {
+  it('the 4 formulas (NL)', () => {
     const c = combos(1, BOOK.combos, true);
     expect(c.map(x => x.name)).toEqual(['Ochtendformule', 'Middagformule', 'Vieruurtje', 'Zondagsbrunch']);
     expect(c[1].when).toBe('11 u 30 – 14 u');
     expect(c[0].items.map(p => p.name)).toEqual(['Croissant met roomboter', 'Koffie & latte']);
   });
 
-  it('hides every price when prices are switched off', () => {
-    expect(combos(0, BOOK.combos, false).map(x => x.price)).toEqual(['', '', '', '']);
-  });
-
-  it('skips unknown product ids', () => {
-    const c = combos(0, [{ n: ['X', 'X'], when: ['', ''], items: ['nope', 'cafe'], price: 2 }], true);
-    expect(c[0].items.map(p => p.id)).toEqual(['cafe']);
-    expect(c[0].price).toBe('2,00 €');
-  });
-});
-
-describe('reflexes', () => {
-  it('numbers the reflexes from 1, in data order', () => {
+  it('reflexes', () => {
     expect(reflexes(0).map(r => r.n)).toEqual(['1', '2', '3', '4']);
     expect(reflexes(0)[0].text).toBe('Toujours proposer une boisson avec un produit snacking.');
-  });
-
-  it('is translated (NL)', () => {
     expect(reflexes(1)[0].text).toBe('Altijd een drankje voorstellen bij een snack.');
-    expect(reflexes(1)).toHaveLength(BOOK.reflexes.length);
-  });
-});
-
-describe('pairs', () => {
-  it('has one row per product, in data order', () => {
-    const p = pairs(0);
-    expect(p.map(r => r.id)).toEqual(BOOK.products.map(x => x.id));
   });
 
-  it('joins the cross-sell names with " · " and keeps the sentence (FR)', () => {
-    const croissant = pairs(0)[0];
-    expect(croissant).toEqual({
+  it('associations', () => {
+    expect(pairs(0).map(r => r.id)).toEqual(BOOK.products.map(x => x.id));
+    expect(pairs(0)[0]).toEqual({
       id: 'croissant',
       name: 'Croissant pur beurre',
       cross: "Café & latte · Jus d'orange pressé",
       line: 'Avec un café, vous avez le petit-déjeuner complet.',
     });
     expect(pairs(0).find(r => r.id === 'glace')!.cross).toBe('Cookie chocolat noisette');
-  });
-
-  it('is translated (NL)', () => {
-    const croissant = pairs(1)[0];
-    expect(croissant.name).toBe('Croissant met roomboter');
-    expect(croissant.cross).toBe('Koffie & latte · Versgeperst sinaasappelsap');
-    expect(croissant.line).toBe('Met een koffie heeft u meteen een volledig ontbijt.');
-  });
-
-  it('skips unknown cross-sell ids; no cross-sell → empty string', () => {
-    const base = BOOK.products[0];
-    const xs: Product[] = [{ ...base, id: 'a', cross: ['nope', 'jus'] }, { ...base, id: 'b', cross: [] }];
-    expect(pairs(0, xs).map(r => r.cross)).toEqual(["Jus d'orange pressé", '']);
+    expect(pairs(1)[0]).toMatchObject({
+      name: 'Croissant met roomboter',
+      cross: 'Koffie & latte · Versgeperst sinaasappelsap',
+      line: 'Met een koffie heeft u meteen een volledig ontbijt.',
+    });
   });
 });

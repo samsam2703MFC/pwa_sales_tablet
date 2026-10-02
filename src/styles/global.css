@@ -13,14 +13,11 @@
 }
 @font-face {
   font-family: 'Gotham';
-  src: url('../assets/fonts/Gotham_Extra_Light_Italic.otf') format('opentype');
-  font-weight: 300; font-style: italic; font-display: swap;
-}
-@font-face {
-  font-family: 'Gotham';
   src: url('../assets/fonts/Gotham_Regular_New.otf') format('opentype');
   font-weight: 400; font-style: normal; font-display: swap;
 }
+/* Italic is only used at 400 (sales pitches, phrases to say): the design system's
+   other italic faces (300, 500–700) are left out so they are not precached. */
 @font-face {
   font-family: 'Gotham';
   src: url('../assets/fonts/Gotham_Italic.otf') format('opentype');
@@ -33,29 +30,14 @@
 }
 @font-face {
   font-family: 'Gotham';
-  src: url('../assets/fonts/Gotham_Italic.otf') format('opentype');
-  font-weight: 500; font-style: italic; font-display: swap;
-}
-@font-face {
-  font-family: 'Gotham';
   src: url('../assets/fonts/Gotham_Regular.otf') format('opentype');
   font-weight: 600; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'Gotham';
-  src: url('../assets/fonts/Gotham_ItalicBold.otf') format('opentype');
-  font-weight: 600; font-style: italic; font-display: swap;
 }
 @font-face {
   font-family: 'Gotham';
   /* No dedicated Gotham Bold file shipped — 700 maps to Black (design system). */
   src: url('../assets/fonts/Gotham_Black.otf') format('opentype');
   font-weight: 700; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'Gotham';
-  src: url('../assets/fonts/Gotham_ItalicBold.otf') format('opentype');
-  font-weight: 700; font-style: italic; font-display: swap;
 }
 
 /* --- Vank (display) — base ASCII only; accents fall through to Gotham ---- */
@@ -182,13 +164,23 @@ input::placeholder {
 a { color: var(--color-primary); }
 a:hover { color: var(--color-primary-hover); }
 
+/* Every <img> is decorative or sits inside a button: no drag, no long-press image menu
+   (iOS preview / Save to Photos / Share; Chrome Android's image menu — a long press then
+   hits the parent). Taps still reach the surrounding button. */
 img {
   -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+  pointer-events: none;
 }
 
 :focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+/* A page title focused after a section change (AppShell) is a focus target, not a control: no ring. */
+h1[tabindex="-1"]:focus {
+  outline: none;
 }
 
 /* Horizontal filter rows: scroll, hidden scrollbar, no wrap. */

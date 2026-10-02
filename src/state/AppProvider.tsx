@@ -1,12 +1,11 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { labels } from '../lib/i18n';
 import { AppContext, initialState, toTop, transitions, type Actions, type AppContextValue, type AppState, type Patch } from './appState';
-import { useWindowWidth } from './useWindowWidth';
+import { useCompact } from './useCompact';
 
 export function AppProvider({ children, initial }: { children: ReactNode; initial?: Partial<AppState> }) {
   const [state, setState] = useState<AppState>(() => ({ ...initialState(), ...initial }));
-  const width = useWindowWidth();
-  const compact = width < 1000;
+  const compact = useCompact();
 
   const set = useCallback((patch: Patch) => {
     setState(s => ({ ...s, ...(typeof patch === 'function' ? patch(s) : patch) }));
@@ -39,8 +38,8 @@ export function AppProvider({ children, initial }: { children: ReactNode; initia
   }), [set]);
 
   const value = useMemo<AppContextValue>(() => ({
-    state, actions, lang: state.lang, L: labels(state.lang), compact, width,
-  }), [state, actions, compact, width]);
+    state, actions, lang: state.lang, L: labels(state.lang), compact,
+  }), [state, actions, compact]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

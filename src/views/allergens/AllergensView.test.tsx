@@ -87,6 +87,14 @@ describe('AllergensView', () => {
     expect(screen.queryByRole('button', { name: 'Effacer' })).toBeNull();
   });
 
+  it('reset: focus moves to the first chip instead of being lost with the button', () => {
+    renderAl(0, { ex: ['lait'] });
+    const reset = screen.getByRole('button', { name: 'Effacer' });
+    reset.focus();
+    fireEvent.click(reset);
+    expect(document.activeElement).toBe(chip('Gluten'));
+  });
+
   it('home quick-ask selection (noix + arachides) in NL', () => {
     renderAl(1, { ex: ['noix', 'arach'] });
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Allergenen');

@@ -8,11 +8,15 @@ const BEIGE = '#EAE4DC';
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Relative URLs: one dist/ can be served at any path (no client-side routes; the manifest
+  // start_url/scope and the image URLs built from BASE_URL are relative too). Dev still serves at '/'.
+  base: './',
   plugins: [
     react(),
     VitePWA({
-      // New versions install in the background, activate at once and the page reloads
-      // (see src/pwa/register.ts, which registers the worker itself).
+      // New versions install in the background and activate at once; the page reloads onto
+      // them only when nobody is using the tablet (src/pwa/register.ts, which registers the
+      // worker itself and passes onNeedReload so the plugin does not reload on the spot).
       registerType: 'autoUpdate',
       injectRegister: false,
       // The manifest icons are already matched by workbox.globPatterns (no duplicate entries).
@@ -25,9 +29,11 @@ export default defineConfig({
           'FAQ clients, services, conservation et formation, en français et en néerlandais, même hors connexion.',
         lang: 'fr',
         dir: 'ltr',
-        // Stable app identity (resolved against start_url, so it follows a sub-path deployment):
-        // a future start_url change (e.g. a query string) will not create a second installed app.
-        id: './',
+        // No explicit `id`: the app identity is then start_url, i.e. the folder dist/ is served
+        // from (https://intranet/book-vendeuses/). A relative `id` would be resolved against the
+        // origin, not start_url, so under a sub-path it would claim the origin root and clash with
+        // any other app installed from that host. Keep start_url as is: changing it (e.g. adding a
+        // query string) would change the identity and install a second app.
         start_url: '.',
         scope: '.',
         display: 'standalone',

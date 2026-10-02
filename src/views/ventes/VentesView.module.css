@@ -137,18 +137,23 @@
   border-bottom: 0.5px solid var(--color-border-tertiary);
 }
 
-/* Product name: text button (UA line-height, as in the prototype). */
+/* Product name: text button (UA line-height, as in the prototype). Its hit area spans the
+   row's 12 px padding (43 px+ tall) while the layout box stays at the text height. */
 .name {
-  margin: 0;
+  margin: -12px 0;
   border: none;
   background: transparent;
   text-align: left;
-  padding: 0;
+  padding: 12px 0;
   font-family: var(--font-ui);
   font-size: 16px;
   font-weight: 500;
   color: var(--color-text);
   cursor: pointer;
+}
+/* Keep the keyboard focus ring inside the row rather than over the separators. */
+.name:focus-visible {
+  outline-offset: -2px;
 }
 
 .cross {

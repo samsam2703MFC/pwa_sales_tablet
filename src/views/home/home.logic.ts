@@ -1,42 +1,10 @@
 import { BOOK } from '../../data/book';
 import { ONB_SHORT } from '../../data/onboardingShort';
-import type { Lang, Product, Season, T2 } from '../../data/types';
-import { asset } from '../../lib/asset';
+import type { Lang, Product, T2 } from '../../data/types';
 import { toCard, tr, type ProductCardVM } from '../../lib/catalog';
 import { navLabel, type View } from '../../lib/i18n';
+import { nextSeason, seasonsNow, toSeasonVM, type SeasonVM } from '../../lib/seasons';
 import type { AppState } from '../../state/store';
-
-/** Seasons running during `month` (1–12), in data order. */
-export const seasonsNow = (month: number, seasons: readonly Season[] = BOOK.seasons): Season[] =>
-  seasons.filter(x => x.m.includes(month));
-
-/**
- * The season to get ready for: the first one starting after `month` that is not
- * already running, else the first season of the year (wraps December → January).
- */
-export const nextSeason = (month: number, seasons: readonly Season[] = BOOK.seasons): Season =>
-  seasons.find(x => x.m[0] > month && !x.m.includes(month)) || seasons[0];
-
-/** Season block view model (the prototype's `sc()`). */
-export interface SeasonVM {
-  id: string;
-  name: string;
-  /** Resolved illustration URL. */
-  img: string;
-  dates: string;
-  tip: string;
-  /** Products of that season, in data order. */
-  products: ProductCardVM[];
-}
-
-export const toSeasonVM = (x: Season, lang: Lang, products: readonly Product[] = BOOK.products): SeasonVM => ({
-  id: x.id,
-  name: tr(x.n, lang),
-  img: asset(x.img),
-  dates: tr(x.dates, lang),
-  tip: tr(x.tip, lang),
-  products: products.filter(p => p.season === x.id).map(p => toCard(p, lang)),
-});
 
 /** "Les plus vendus": products flagged `best`, in data order. */
 export const bestSellers = (lang: Lang, products: readonly Product[] = BOOK.products): ProductCardVM[] =>

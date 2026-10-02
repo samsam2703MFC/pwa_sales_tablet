@@ -13,7 +13,9 @@ export function SearchView() {
   return (
     <section className={s.section}>
       <h1 className={s.title}>{L.results} « {state.q} »</h1>
-      {none && <p className={s.none} role="status">{L.noRes}</p>}
+      {/* Announced by the search bar's status (src/shell/SearchBar.tsx), not here: a live region
+          mounted already filled is often not read. */}
+      {none && <p className={s.none}>{L.noRes}</p>}
       {res.products.length > 0 && (
         <ProductGrid>
           {res.products.map(p => <ProductCard key={p.id} p={toCard(p, lang)} details={false} />)}

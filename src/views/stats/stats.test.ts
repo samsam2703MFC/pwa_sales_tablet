@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { BOOK } from '../../data/book';
 import type { Lang, Period, Seller, Stats } from '../../data/types';
 import { PRODUCTS } from '../../lib/catalog';
+import { FIXTURE_BOOK as F, FIXTURE_CATALOG as LK, seller } from '../../test/fixtures';
 import {
   aggregate, dayBars, kpiCards, mergeTop, progressPct, ranking, selectedSellers, statsView, topProducts,
 } from './stats.logic';
@@ -37,29 +38,16 @@ function reference(li: Lang, stSel: string, per: Period) {
   return { g, kpis, dayBars, topList, rankRows };
 }
 
-const seller = (id: string, d: [number, number, number, number], top: [string, number][] = [], bars = [1, 1, 1, 1, 1, 1, 1]): Seller => {
-  const ps = { ca: d[0], tickets: d[1], cross: d[2], saison: d[3] };
-  return { id, name: id.toUpperCase(), day: ps, week: ps, month: ps, bars, top };
-};
-
 describe('selectedSellers / aggregate', () => {
-  it('team = all 5 sellers, a seller id = that seller only', () => {
-    expect(selectedSellers('team').map(x => x.id)).toEqual(['sophie', 'ines', 'marie', 'laura', 'chloe']);
-    expect(selectedSellers('marie').map(x => x.id)).toEqual(['marie']);
+  it('team = every seller, a seller id = that seller only, an unknown id = nobody', () => {
+    expect(selectedSellers('team', F.stats).map(x => x.id)).toEqual(['ana', 'bea']);
+    expect(selectedSellers('bea', F.stats).map(x => x.id)).toEqual(['bea']);
+    expect(selectedSellers('ghost', F.stats)).toEqual([]);
   });
 
-  it('team week: sums, ticket-weighted cross-sell rounded', () => {
-    const g = aggregate(selectedSellers('team'), 'week');
-    expect(g.ca).toBe(4310 + 3980 + 4620 + 3120 + 3560);
-    expect(g.tickets).toBe(452 + 440 + 470 + 378 + 398);
-    const w = (39 * 452 + 34 * 440 + 36 * 470 + 28 * 378 + 42 * 398) / 2138;
-    expect(g.cross).toBe(Math.round(w));
-    expect(g.saison).toBe(104 + 88 + 118 + 61 + 93);
-  });
-
-  it('single seller: own figures', () => {
-    expect(aggregate(selectedSellers('laura'), 'day')).toEqual({ ca: 498, tickets: 61, cross: 26, saison: 8 });
-    expect(aggregate(selectedSellers('chloe'), 'month')).toEqual({ ca: 14700, tickets: 1640, cross: 41, saison: 380 });
+  it('team: sums, ticket-weighted cross-sell rounded; single seller: own figures', () => {
+    expect(aggregate(selectedSellers('team', F.stats), 'week')).toEqual({ ca: 300, tickets: 30, cross: 30, saison: 8 }); // (40×20 + 10×10) / 30
+    expect(aggregate(selectedSellers('ana', F.stats), 'day')).toEqual({ ca: 200, tickets: 20, cross: 40, saison: 6 });
   });
 
   it('weighted average favours sellers with more tickets', () => {
@@ -80,6 +68,201 @@ describe('progressPct', () => {
 });
 
 describe('kpiCards', () => {
+  it('values, objectives and statuses (FR / NL)', () => {
+    const k = kpiCards(0, 'team', 'week', F.stats);
+    expect(k.map(x => x.label)).toEqual(["Chiffre d'affaires", 'Panier moyen', 'Vente additionnelle', 'Produits de saison']);
+    expect(k[0]).toMatchObject({ value: '300 €', sub: '30 tickets', pct: null, hit: null });
+    expect(k[1]).toMatchObject({ value: '10,00 €', sub: 'Objectif 10,00 €', pct: 100, hit: true });
+    expect(k[2]).toMatchObject({ value: '30 %', sub: 'Objectif 30 %', pct: 100, hit: true });
+    // seasonal objective = 20 per seller × 2
+    expect(k[3]).toMatchObject({ value: '8 pcs', sub: 'Objectif 40 pcs', pct: 20, hit: false });
+    const nl = kpiCards(1, 'bea', 'day', F.stats);
+    expect(nl.map(x => x.label)).toEqual(['Omzet', 'Gemiddeld ticket', 'Bijverkoop', 'Seizoensproducten']);
+    expect(nl.map(x => [x.value, x.sub])).toEqual([['100 €', '10 tickets'], ['10,00 €', 'Doel 10,00 €'], ['10 %', 'Doel 30 %'], ['2 st.', 'Doel 5 st.']]);
+  });
+
+  it('thousands separators follow the locale (fr-BE / nl-BE)', () => {
+    const big: Stats = { obj: F.stats.obj, sellers: [seller('a', [80690, 1, 1, 1])] };
+    expect(kpiCards(0, 'team', 'month', big)[0].value).toBe((80690).toLocaleString('fr-BE') + ' €');
+    expect(kpiCards(1, 'team', 'month', big)[0].value).toBe('80.690 €');
+  });
+
+  it('hit exactly at the objective, miss just below', () => {
+    const at: Stats = { obj: { panier: 10, cross: 30, saison: { day: 5, week: 5, month: 5 } }, sellers: [seller('a', [100, 10, 30, 5])] };
+    const below: Stats = { obj: at.obj, sellers: [seller('a', [99.9, 10, 29, 4])] };
+    expect(kpiCards(0, 'team', 'day', at).slice(1).map(k => [k.hit, k.pct])).toEqual([[true, 100], [true, 100], [true, 100]]);
+    expect(kpiCards(0, 'team', 'day', below).slice(1).map(k => [k.hit, k.pct])).toEqual([[false, 100], [false, 97], [false, 80]]);
+  });
+
+  it('seasonal objective scales with the number of selected sellers', () => {
+    const st: Stats = { obj: { panier: 1, cross: 1, saison: { day: 10, week: 50, month: 200 } }, sellers: [seller('a', [1, 1, 1, 12]), seller('b', [1, 1, 1, 7])] };
+    expect(kpiCards(0, 'team', 'week', st)[3]).toMatchObject({ sub: 'Objectif 100 pcs', hit: false, pct: 19 });
+    expect(kpiCards(0, 'a', 'day', st)[3]).toMatchObject({ sub: 'Objectif 10 pcs', hit: true, pct: 100 });
+    expect(kpiCards(0, 'b', 'day', st)[3]).toMatchObject({ sub: 'Objectif 10 pcs', hit: false, pct: 70 });
+  });
+});
+
+describe('top products', () => {
+  it('mergeTop sums quantities by product, desc, ties keep first-seen order', () => {
+    const list = [seller('a', [1, 1, 1, 1], [['x', 5], ['y', 3]]), seller('b', [1, 1, 1, 1], [['z', 5], ['y', 4], ['w', 8]])];
+    expect(mergeTop(list)).toEqual([['w', 8], ['y', 7], ['x', 5], ['z', 5]]);
+  });
+
+  it('team: merged lists, sorted desc, unknown product ids skipped, ranked from 1 (FR / NL)', () => {
+    const t = topProducts(0, 'team', F.stats, LK);
+    expect(t.map(x => [x.rank, x.product.id, x.qty, x.qtyLabel])).toEqual([[1, 'p1', 9, '9 pcs'], [2, 'p3', 7, '7 pcs'], [3, 'p2', 1, '1 pcs']]);
+    expect(topProducts(1, 'bea', F.stats, LK).map(x => [x.product.name, x.qtyLabel])).toEqual([['p1-nl', '4 st.'], ['p2-nl', '1 st.']]);
+  });
+
+  it('keeps the first 5', () => {
+    const top: [string, number][] = [['p1', 6], ['p2', 5], ['p3', 4], ['p4', 3], ['p5', 2], ['p1', 0]];
+    const st: Stats = { obj: F.stats.obj, sellers: [seller('a', [1, 1, 1, 1], top)] };
+    expect(topProducts(0, 'team', st, LK).map(x => x.product.id)).toEqual(['p1', 'p2', 'p3', 'p4', 'p5']);
+  });
+});
+
+describe('dayBars', () => {
+  const st: Stats = { obj: F.stats.obj, sellers: [seller('a', [1, 1, 1, 1], [], [10, 20, 30, 40, 50, 60, 1000]), seller('b', [1, 1, 1, 1], [], [0, 0, 0, 0, 0, 0, 1000])] };
+
+  it('sums the selection per day, heights relative to the best day, last day flagged', () => {
+    const d = dayBars(0, 'team', st);
+    expect(d.map(x => x.label)).toEqual(['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']);
+    expect(d.map(x => x.pct)).toEqual([1, 1, 2, 2, 3, 3, 100]);
+    expect(d[6]).toMatchObject({ value: (2000).toLocaleString('fr-BE') + ' €', last: true });
+    expect(d.filter(x => x.last)).toHaveLength(1);
+    expect(dayBars(0, 'a', st).map(x => x.pct)).toEqual([1, 2, 3, 4, 5, 6, 100]);
+  });
+
+  it('NL day names and nl-BE amounts', () => {
+    const d = dayBars(1, 'team', st);
+    expect(d.map(x => x.label)).toEqual(['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo']);
+    expect(d[6].value).toBe('2.000 €');
+  });
+});
+
+describe('ranking', () => {
+  it('whole team by revenue of the period, even when a seller is selected; figures and cross-sell threshold', () => {
+    const r = ranking(0, 'bea', 'day', F.stats);
+    expect(r).toEqual([
+      { id: 'ana', rank: 1, name: 'ANA', ca: '200 €', pan: '10,00 €', cross: '40 %', crossHit: true, saison: '6', on: false },
+      { id: 'bea', rank: 2, name: 'BEA', ca: '100 €', pan: '10,00 €', cross: '10 %', crossHit: false, saison: '2', on: true },
+    ]);
+    const atObjective: Stats = { obj: F.stats.obj, sellers: [seller('a', [1, 1, 30, 0])] };
+    expect(ranking(0, 'team', 'week', atObjective)[0].crossHit).toBe(true);
+  });
+});
+
+describe('zero tickets / zero sales (real till data): never NaN', () => {
+  // A seller off today (0 tickets, 0 sales all week) next to the team.
+  const nora = seller('nora', [0, 0, 0, 0], [], [0, 0, 0, 0, 0, 0, 0]);
+  const withNora: Stats = { obj: F.stats.obj, sellers: [...F.stats.sellers, nora] };
+  const allZero: Stats = { obj: F.stats.obj, sellers: [nora, seller('zoe', [0, 0, 0, 0], [], [0, 0, 0, 0, 0, 0, 0])] };
+  const noNaN = (x: unknown) => expect(JSON.stringify(x)).not.toContain('NaN');
+
+  it('aggregate: cross-sell rate 0 when the whole selection has 0 tickets', () => {
+    expect(aggregate(allZero.sellers, 'day')).toEqual({ ca: 0, tickets: 0, cross: 0, saison: 0 });
+    expect(aggregate([], 'week')).toEqual({ ca: 0, tickets: 0, cross: 0, saison: 0 });
+  });
+
+  it('progressPct: a zero objective is reached (full bar), never NaN', () => {
+    expect(progressPct(0, 0)).toBe(100);
+    expect(progressPct(5, 0)).toBe(100);
+  });
+
+  for (const lang of LANGS) for (const per of PERIODS) {
+    it(`kpiCards for a 0-ticket seller (${lang ? 'NL' : 'FR'} ${per}): 0,00 € / 0 %, 4 % stub, objective not reached`, () => {
+      const k = kpiCards(lang, 'nora', per, withNora);
+      noNaN(k);
+      expect(k.map(x => x.value)).toEqual(['0 €', '0,00 €', '0 %', '0 ' + (lang ? 'st.' : 'pcs')]);
+      expect(k.map(x => x.pct)).toEqual([null, 4, 4, 4]);
+      expect(k.map(x => x.hit)).toEqual([null, false, false, false]);
+      for (const x of k) if (x.pct != null) expect(Number.isFinite(x.pct)).toBe(true);
+    });
+  }
+
+  it('kpiCards for a whole team at 0 tickets: no NaN', () => {
+    const k = kpiCards(0, 'team', 'day', allZero);
+    noNaN(k);
+    expect(k[1]).toMatchObject({ value: '0,00 €', pct: 4, hit: false });
+    expect(k[2]).toMatchObject({ value: '0 %', pct: 4, hit: false });
+  });
+
+  it('team figures are unchanged by a 0-ticket seller (ticket-weighted cross)', () => {
+    const k = kpiCards(0, 'team', 'week', withNora);
+    const ref = kpiCards(0, 'team', 'week', F.stats);
+    expect(k.slice(0, 3).map(x => [x.value, x.pct, x.hit])).toEqual(ref.slice(0, 3).map(x => [x.value, x.pct, x.hit]));
+  });
+
+  it('ranking: the 0-ticket seller shows 0,00 € last, no NaN', () => {
+    for (const per of PERIODS) {
+      const r = ranking(0, 'nora', per, withNora);
+      noNaN(r);
+      expect(r.at(-1)).toMatchObject({ id: 'nora', rank: 3, ca: '0 €', pan: '0,00 €', cross: '0 %', crossHit: false, saison: '0', on: true });
+    }
+  });
+
+  it('dayBars: a week without sales gives 0-height bars, every pct finite', () => {
+    for (const st of [withNora, allZero]) {
+      const d = dayBars(0, st === allZero ? 'team' : 'nora', st);
+      noNaN(d);
+      expect(d.map(x => x.pct)).toEqual([0, 0, 0, 0, 0, 0, 0]);
+      expect(d.map(x => x.value)).toEqual(Array(7).fill('0 €'));
+    }
+  });
+
+  it('statsView: unknown seller id (empty selection) renders zeros, no NaN', () => {
+    const vm = statsView(0, 'ghost', 'day', F.stats, LK);
+    noNaN(vm);
+    expect(vm.kpis.map(x => x.value)).toEqual(['0 €', '0,00 €', '0 %', '0 pcs']);
+    expect(vm.days.every(x => x.pct === 0)).toBe(true);
+  });
+});
+
+// Parity with the prototype's maths, whatever the book holds (the reference reads it too).
+describe('statsView matches the prototype for every language × selection × period', () => {
+  for (const lang of LANGS) for (const sel of SELS) for (const per of PERIODS) {
+    it(`${lang ? 'NL' : 'FR'} ${sel} ${per}`, () => {
+      const ref = reference(lang, sel, per);
+      const vm = statsView(lang, sel, per);
+      expect(vm.kpis.map(k => k.pct)).toEqual(ref.kpis.map(k => k.w));
+      expect(vm.kpis.map(k => k.hit)).toEqual(ref.kpis.map(k => k.hit));
+      expect(vm.kpis[0].value).toBe(ref.kpis[0].value);
+      expect(vm.kpis[1].value).toBe(ref.kpis[1].value);
+      expect(vm.kpis[2].value).toBe(ref.kpis[2].value);
+      expect(vm.kpis[3].value.split(' ')[0]).toBe(ref.kpis[3].value);
+      expect(vm.kpis[3].sub).toContain(' ' + ref.kpis[3].obj + ' ');
+      expect(vm.days.map(d => [d.value, d.pct])).toEqual(ref.dayBars.map(d => [d.v, d.h]));
+      expect(vm.top.map(t => [t.product.id, t.qty])).toEqual(ref.topList);
+      expect(vm.rank.map(r => ({ id: r.id, ca: r.ca, pan: r.pan, cross: r.cross, saison: r.saison, crossHit: r.crossHit, on: r.on }))).toEqual(ref.rankRows);
+      expect(vm.periods.filter(p => p.active).map(p => p.id)).toEqual([per]);
+      expect(vm.sellers.filter(c => c.active).map(c => c.id)).toEqual([sel]);
+    });
+  }
+
+  it('chips: Équipe/Team + the sellers; periods in both languages', () => {
+    expect(statsView(0, 'team', 'week', F.stats, LK).sellers.map(c => c.label)).toEqual(['Équipe', 'ANA', 'BEA']);
+    expect(statsView(1, 'team', 'week', F.stats, LK).sellers[0].label).toBe('Team');
+    expect(statsView(0, 'team', 'week').periods.map(p => p.label)).toEqual(["Aujourd'hui", 'Cette semaine', 'Ce mois']);
+    expect(statsView(1, 'team', 'week').periods.map(p => p.label)).toEqual(['Vandaag', 'Deze week', 'Deze maand']);
+  });
+});
+
+describe('sample data (prototype golden values)', () => {
+  it('team = the 5 sellers', () => {
+    expect(selectedSellers('team').map(x => x.id)).toEqual(['sophie', 'ines', 'marie', 'laura', 'chloe']);
+    expect(statsView(0, 'team', 'week').sellers.map(c => c.label)).toEqual(['Équipe', 'Sophie', 'Inès', 'Marie', 'Laura', 'Chloé']);
+  });
+
+  it('team week: sums, ticket-weighted cross-sell rounded', () => {
+    const g = aggregate(selectedSellers('team'), 'week');
+    expect(g.ca).toBe(4310 + 3980 + 4620 + 3120 + 3560);
+    expect(g.tickets).toBe(452 + 440 + 470 + 378 + 398);
+    expect(g.cross).toBe(Math.round((39 * 452 + 34 * 440 + 36 * 470 + 28 * 378 + 42 * 398) / 2138));
+    expect(g.saison).toBe(104 + 88 + 118 + 61 + 93);
+    expect(aggregate(selectedSellers('laura'), 'day')).toEqual({ ca: 498, tickets: 61, cross: 26, saison: 8 });
+    expect(aggregate(selectedSellers('chloe'), 'month')).toEqual({ ca: 14700, tickets: 1640, cross: 41, saison: 380 });
+  });
+
   it('team week FR: values, objectives and statuses', () => {
     const k = kpiCards(0, 'team', 'week');
     expect(k.map(x => x.label)).toEqual(["Chiffre d'affaires", 'Panier moyen', 'Vente additionnelle', 'Produits de saison']);
@@ -104,23 +287,7 @@ describe('kpiCards', () => {
     expect(kpiCards(1, 'team', 'month')[0].value).toBe('80.690 €');
   });
 
-  it('hit exactly at the objective, miss just below', () => {
-    const at: Stats = { obj: { panier: 10, cross: 30, saison: { day: 5, week: 5, month: 5 } }, sellers: [seller('a', [100, 10, 30, 5])] };
-    const below: Stats = { obj: at.obj, sellers: [seller('a', [99.9, 10, 29, 4])] };
-    expect(kpiCards(0, 'team', 'day', at).slice(1).map(k => [k.hit, k.pct])).toEqual([[true, 100], [true, 100], [true, 100]]);
-    expect(kpiCards(0, 'team', 'day', below).slice(1).map(k => [k.hit, k.pct])).toEqual([[false, 100], [false, 97], [false, 80]]);
-  });
-
-  it('seasonal objective scales with the number of selected sellers', () => {
-    const st: Stats = { obj: { panier: 1, cross: 1, saison: { day: 10, week: 50, month: 200 } }, sellers: [seller('a', [1, 1, 1, 12]), seller('b', [1, 1, 1, 7])] };
-    expect(kpiCards(0, 'team', 'week', st)[3]).toMatchObject({ sub: 'Objectif 100 pcs', hit: false, pct: 19 });
-    expect(kpiCards(0, 'a', 'day', st)[3]).toMatchObject({ sub: 'Objectif 10 pcs', hit: true, pct: 100 });
-    expect(kpiCards(0, 'b', 'day', st)[3]).toMatchObject({ sub: 'Objectif 10 pcs', hit: false, pct: 70 });
-  });
-});
-
-describe('dayBars', () => {
-  it('team: sums per day, heights relative to the best day, last day flagged', () => {
+  it('team day bars', () => {
     const d = dayBars(0, 'team');
     expect(d.map(x => x.label)).toEqual(['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']);
     expect(d[6]).toMatchObject({ value: (3300).toLocaleString('fr-BE') + ' €', pct: 100, last: true });
@@ -128,21 +295,13 @@ describe('dayBars', () => {
     expect(d.filter(x => x.last)).toHaveLength(1);
   });
 
-  it('NL day names and nl-BE amounts', () => {
+  it('team day bars (NL)', () => {
     const d = dayBars(1, 'team');
-    expect(d.map(x => x.label)).toEqual(['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo']);
     expect(d[6].value).toBe('3.300 €');
   });
 
   it('single seller: own bars', () => {
     expect(dayBars(1, 'sophie').map(x => x.value)).toEqual(['580 €', '610 €', '642 €', '598 €', '702 €', '431 €', '747 €']);
-  });
-});
-
-describe('top products', () => {
-  it('mergeTop sums quantities by product, desc, ties keep first-seen order', () => {
-    const list = [seller('a', [1, 1, 1, 1], [['x', 5], ['y', 3]]), seller('b', [1, 1, 1, 1], [['z', 5], ['y', 4], ['w', 8]])];
-    expect(mergeTop(list)).toEqual([['w', 8], ['y', 7], ['x', 5], ['z', 5]]);
   });
 
   it('team: top 5 merged from every seller', () => {
@@ -150,22 +309,15 @@ describe('top products', () => {
     expect(t.map(x => [x.product.id, x.qty])).toEqual([['pistolet', 600], ['croissant', 402], ['cookie', 225], ['club', 206], ['brioche', 186]]);
     expect(t.map(x => x.rank)).toEqual([1, 2, 3, 4, 5]);
     expect(t[0].qtyLabel).toBe('600 pcs');
-    expect(t[1].product.name).toBe(PRODUCTS.croissant.name[0]);
+    expect(t[1].product.name).toBe(PRODUCTS.croissant!.name[0]);
   });
 
   it('single seller: own list re-sorted desc (NL)', () => {
     const t = topProducts(1, 'marie');
     expect(t.map(x => [x.product.id, x.qtyLabel])).toEqual([['croissant', '190 st.'], ['brioche', '102 st.'], ['tarteriz', '48 st.']]);
-    expect(t[0].product.name).toBe(PRODUCTS.croissant.name[1]);
+    expect(t[0].product.name).toBe(PRODUCTS.croissant!.name[1]);
   });
 
-  it('unknown product ids are skipped', () => {
-    const st: Stats = { obj: BOOK.stats.obj, sellers: [seller('a', [1, 1, 1, 1], [['nope', 99], ['croissant', 1]])] };
-    expect(topProducts(0, 'team', st).map(x => [x.rank, x.product.id])).toEqual([[1, 'croissant']]);
-  });
-});
-
-describe('ranking', () => {
   it('sorted by revenue of the period, whole team even when a seller is selected', () => {
     expect(ranking(0, 'team', 'week').map(r => r.id)).toEqual(['marie', 'sophie', 'ines', 'chloe', 'laura']);
     expect(ranking(0, 'laura', 'day').map(r => r.id)).toEqual(['marie', 'sophie', 'ines', 'chloe', 'laura']);
@@ -179,33 +331,5 @@ describe('ranking', () => {
     const marie = r.find(x => x.id === 'marie')!;
     expect(marie).toMatchObject({ ca: '18.950 €', pan: '9,80 €', cross: '35 %', crossHit: true, saison: '455', on: false });
     expect(r.find(x => x.id === 'ines')).toMatchObject({ cross: '33 %', crossHit: false });
-  });
-});
-
-describe('statsView matches the prototype for every language × selection × period', () => {
-  for (const lang of LANGS) for (const sel of SELS) for (const per of PERIODS) {
-    it(`${lang ? 'NL' : 'FR'} ${sel} ${per}`, () => {
-      const ref = reference(lang, sel, per);
-      const vm = statsView(lang, sel, per);
-      expect(vm.kpis.map(k => k.pct)).toEqual(ref.kpis.map(k => k.w));
-      expect(vm.kpis.map(k => k.hit)).toEqual(ref.kpis.map(k => k.hit));
-      expect(vm.kpis[0].value).toBe(ref.kpis[0].value);
-      expect(vm.kpis[1].value).toBe(ref.kpis[1].value);
-      expect(vm.kpis[2].value).toBe(ref.kpis[2].value);
-      expect(vm.kpis[3].value.split(' ')[0]).toBe(ref.kpis[3].value);
-      expect(vm.kpis[3].sub).toContain(' ' + ref.kpis[3].obj + ' ');
-      expect(vm.days.map(d => [d.value, d.pct])).toEqual(ref.dayBars.map(d => [d.v, d.h]));
-      expect(vm.top.map(t => [t.product.id, t.qty])).toEqual(ref.topList);
-      expect(vm.rank.map(r => ({ id: r.id, ca: r.ca, pan: r.pan, cross: r.cross, saison: r.saison, crossHit: r.crossHit, on: r.on }))).toEqual(ref.rankRows);
-      expect(vm.periods.filter(p => p.active).map(p => p.id)).toEqual([per]);
-      expect(vm.sellers.filter(c => c.active).map(c => c.id)).toEqual([sel]);
-    });
-  }
-
-  it('chips: Équipe/Team + the 5 sellers; periods in both languages', () => {
-    expect(statsView(0, 'team', 'week').sellers.map(c => c.label)).toEqual(['Équipe', 'Sophie', 'Inès', 'Marie', 'Laura', 'Chloé']);
-    expect(statsView(1, 'team', 'week').sellers[0].label).toBe('Team');
-    expect(statsView(0, 'team', 'week').periods.map(p => p.label)).toEqual(["Aujourd'hui", 'Cette semaine', 'Ce mois']);
-    expect(statsView(1, 'team', 'week').periods.map(p => p.label)).toEqual(['Vandaag', 'Deze week', 'Deze maand']);
   });
 });

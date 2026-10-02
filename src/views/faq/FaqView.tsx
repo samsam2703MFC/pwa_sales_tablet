@@ -50,7 +50,8 @@ export function FaqView() {
                   <div className={s.linked}>
                     <span className={s.eyebrow}>{L.linkedP}</span>
                     <PillRow gap={8}>
-                      {f.prods.map(m => <ProductPill key={m.id} p={m} size="sm" price={false} hover />)}
+                      {/* Keyed by position: hand-entered data may repeat an id. */}
+                      {f.prods.map((m, i) => <ProductPill key={i + '-' + m.id} p={m} size="sm" price={false} hover />)}
                     </PillRow>
                   </div>
                 )}

@@ -21,7 +21,7 @@ export function VentesView() {
         <SectionTitle>{L.combos}</SectionTitle>
         <div className={s.combos}>
           {vm.combos.map(c => (
-            <div key={c.name} className={s.combo}>
+            <div key={c.id} className={s.combo}>
               <div className={s.comboHead}>
                 <div className={s.comboTitle}>
                   <span className={s.comboName}>{c.name}</span>
@@ -30,8 +30,9 @@ export function VentesView() {
                 <span className={s.comboPrice}>{c.price}</span>
               </div>
               <div className={s.tiles}>
-                {c.items.map(m => (
-                  <button key={m.id} type="button" className={s.tile} title={m.name} onClick={() => actions.openProduct(m.id)}>
+                {/* Keyed by position: a combo may list the same product twice. */}
+                {c.items.map((m, i) => (
+                  <button key={i + '-' + m.id} type="button" className={s.tile} title={m.name} onClick={() => actions.openProduct(m.id)}>
                     <img src={m.img} alt="" loading="lazy" decoding="async" className={s.tileImg} />
                     <span className={s.tileName}>{m.name}</span>
                   </button>
@@ -61,7 +62,8 @@ export function VentesView() {
           {vm.pairs.map(r => (
             <div key={r.id} className={s.pair}>
               <button type="button" className={s.name} onClick={() => actions.openProduct(r.id)}>{r.name}</button>
-              <span className={s.cross}>→ {r.cross}</span>
+              {/* The arrow is decorative: hidden so screen readers don't announce "right arrow" on every row. */}
+              <span className={s.cross}><span aria-hidden="true">→ </span>{r.cross}</span>
               <span className={s.line}>« {r.line} »</span>
             </div>
           ))}

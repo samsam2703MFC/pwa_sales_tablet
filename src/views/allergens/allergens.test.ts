@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { BOOK } from '../../data/book';
 import type { Allergen, Product } from '../../data/types';
+import { product } from '../../test/fixtures';
 import { alA11y, allergenMatrix, allergenStatus } from './allergens.logic';
 
 /** Minimal product for focused tests. */
-const prod = (id: string, al: string[], tr: string[]): Product => ({
-  id, cat: 'vien', img: '', price: null, unit: ['', ''], name: [`${id}-fr`, `${id}-nl`], desc: ['', ''], pitch: ['', ''],
-  ingr: ['', ''], al, tr, diet: null, keep: ['', ''], dlc: 0, cross: [], crossLine: ['', ''],
-});
+const prod = (id: string, al: string[], tr: string[]): Product => product(id, { al, tr });
 
 const ALS: Allergen[] = [
   { id: 'gluten', n: ['Gluten', 'Gluten'], s: 'GLU' },

@@ -17,6 +17,8 @@ npm run build      # build de production + service worker (dist/)
 npm run preview    # sert dist/ comme en production
 ```
 
+Déploiement : `dist/` se copie tel quel dans n'importe quel dossier d'un serveur statique (à la racine ou par exemple sous `https://intranet/book-vendeuses/`), toutes ses adresses étant relatives. Ouvrir l'adresse du dossier avec la barre oblique finale (`…/book-vendeuses/`).
+
 Vérifications :
 
 ```bash
@@ -65,8 +67,10 @@ public/img/      illustrations au trait (design system L'Atelier By)
 
 Les données de `src/data/book.ts` sont des **exemples** à remplacer par les fiches produit officielles (produits, prix, allergènes, FAQ) et par un export caisse (statistiques). Tous les textes sont des paires `[FR, NL]` ; le modèle est typé dans `src/data/types.ts`.
 
+Les identifiants qui relient les fiches entre elles (allergènes, catégorie, saison, associations, FAQ, formules, classement) sont vérifiés par `src/data/validate.ts` : `npm test` échoue et la console de développement affiche la liste si l'un d'eux ne correspond à rien. Les tests de logique tournent sur un petit book de test (`src/test/fixtures.ts`) et ne dépendent pas des données ; seuls les blocs « sample data (prototype golden values) » et les tests des écrans (`*View.test.tsx`) vérifient les valeurs d'exemple : quand `book.ts` est remplacé, il faut les mettre à jour ou les supprimer.
+
 Les illustrations sont dans `public/img/` (PNG transparents au trait, environ 560 px, affichés en `mix-blend-mode: multiply`). Seules les illustrations utilisées par l'application y sont copiées ; les autres restent dans le handoff design.
 
 ## Hors connexion
 
-L'application est une PWA installable : le service worker (Workbox via `vite-plugin-pwa`) met en cache l'application, les polices et toutes les illustrations au premier chargement. Les mises à jour s'installent automatiquement au chargement suivant.
+L'application est une PWA installable : le service worker (Workbox via `vite-plugin-pwa`) met en cache l'application, les polices et toutes les illustrations au premier chargement. Les mises à jour se téléchargent en arrière-plan (au lancement, puis au plus une fois par heure, l'application ouverte ou au réveil de la tablette) ; la page se recharge sur la nouvelle version dès que la tablette est verrouillée ou inutilisée depuis deux minutes (tout de suite si personne n'y a encore touché), jamais pendant une manipulation.
