@@ -42,23 +42,30 @@
 .season {
   background: var(--color-surface);
   border-radius: var(--radius-lg);
-  padding: 28px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Compact head: illustration, then dates, name and instruction. */
+.seasonHead {
   display: grid;
-  grid-template-columns: 160px minmax(0, 1fr);
-  gap: 28px;
-  align-items: start;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
 }
 
 .seasonImg {
-  width: 160px;
-  height: 160px;
+  width: 96px;
+  height: 96px;
   object-fit: contain;
 }
 
 .seasonBody {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -88,7 +95,7 @@
 .h2 {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: 34px;
+  font-size: 30px;
   line-height: 1.15;
   margin: 0;
   text-transform: uppercase;
@@ -98,7 +105,7 @@
   display: flex;
   gap: 10px;
   align-items: baseline;
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.5;
 }
 

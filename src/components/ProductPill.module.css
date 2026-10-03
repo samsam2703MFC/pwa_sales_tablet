@@ -21,9 +21,9 @@
   mix-blend-mode: multiply;
 }
 
-/* A BO photo, cropped to a circle that follows the pill's rounded end. */
+/* A BO photo, cropped to a rounded square. */
 .round {
-  border-radius: 50%;
+  border-radius: 10px;
 }
 
 .name {

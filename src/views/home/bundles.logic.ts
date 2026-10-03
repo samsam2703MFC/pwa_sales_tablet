@@ -30,6 +30,10 @@ export interface BundleRowVM {
   cells: string[];
   /** "Seulement à Gosselies, Halle, Sombreffe · Halle : …" when the tablet is not tied to a shop. */
   note: string;
+  /** When it runs this week, in words: "Lun → ven · avant 11 h", "Tous les jours · 14 → 17 h". */
+  when: string;
+  /** Its slot today ('' when it does not run today, or before the period). */
+  today: string;
 }
 
 export interface BundleWeekVM {
@@ -52,6 +56,25 @@ const parse = (s: string) => {
 /** Glues the last word to the one before (no "11 / h" or a lone "%" on its own line in a narrow cell). */
 const glue = (t: string) => t.replace(/ (?=\S+$)/, '\u00a0');
 
+/**
+ * The days a bundle runs, in words: consecutive days with the same slot grouped
+ * ("lun → ven · avant 11 h", "sam, dim · retrait le matin", "tous les jours · 14 → 17 h").
+ */
+export function whenLabel(cells: readonly string[], lang: Lang): string {
+  const L = bundleLabels(lang);
+  const runs: { a: number; b: number; slot: string }[] = [];
+  cells.forEach((slot, i) => {
+    if (!slot) return;
+    const last = runs[runs.length - 1];
+    if (last && last.b === i - 1 && last.slot === slot) last.b = i;
+    else runs.push({ a: i, b: i, slot });
+  });
+  const days = ({ a, b }: { a: number; b: number }) =>
+    b - a === 6 ? L.everyDay : b - a >= 2 ? `${L.span[a]} → ${L.span[b]}` : b > a ? `${L.span[a]}, ${L.span[b]}` : L.span[a];
+  const text = runs.map(r => `${days(r)} · ${r.slot}`).join(' ; ');
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 /** Does the bundle run in this shop (null: not tied to a shop → every bundle)? */
 const inShop = (b: Bundle, shop: string | null) => !shop || !b.shops || b.shops.includes(shop);
 
@@ -69,6 +92,7 @@ export function bundleWeek(today: Date, shop: string | null, lang: Lang, plan: B
   const dates = DAYS.map(n => new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + n - 1));
   const upcoming = iso(dates[6]) < plan.from;
   const runs = (n: Day) => upcoming || (iso(dates[n - 1]) >= plan.from && iso(dates[n - 1]) <= plan.to);
+  const todayIdx = upcoming ? -1 : dates.findIndex(d => iso(d) === t);
 
   const rows = plan.bundles
     .filter(b => inShop(b, shop))
@@ -86,9 +110,12 @@ export function bundleWeek(today: Date, shop: string | null, lang: Lang, plan: B
         section: b.section,
         cells: DAYS.map(n => (runs(n) ? glue(tr(b.days[n], lang)) : '')),
         note: [restricted, ...variants].filter(Boolean).join(' · '),
+        when: '',
+        today: '',
       };
     })
-    .filter(r => r.cells.some(Boolean));
+    .filter(r => r.cells.some(Boolean))
+    .map(r => ({ ...r, when: whenLabel(r.cells, lang), today: todayIdx >= 0 ? r.cells[todayIdx] : '' }));
   if (!rows.length) return null;
 
   const long = (d: Date) => d.toLocaleDateString(loc, { weekday: 'long', day: 'numeric', month: 'long' });

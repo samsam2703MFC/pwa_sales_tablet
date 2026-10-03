@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BUNDLE_SHOPS, BUNDLES, type BundlePlan } from '../../data/bundles';
-import { bundleWeek, type BundleWeekVM } from './bundles.logic';
+import { bundleWeek, whenLabel, type BundleWeekVM } from './bundles.logic';
 
 const PLAN: BundlePlan = {
   from: '2026-10-15',
@@ -77,6 +77,35 @@ describe('bundleWeek', () => {
     expect([w.start, w.period]).toEqual(['Vanaf donderdag 15 oktober', 'Van 15 oktober tot 15 december']);
     expect(w.days.map(d => d.label)).toEqual(['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo']);
     expect(w.rows[2].note).toBe('Alleen in Gosselies, Halle · Halle: ½ quiche + ½ taart');
+  });
+});
+
+describe('whenLabel', () => {
+  const t = (cells: string[], lang: 0 | 1 = 0) => whenLabel(cells, lang);
+  it('groups consecutive days with the same slot', () => {
+    expect(t(['a', 'a', 'a', 'a', 'a', '', ''])).toBe('Lun → ven · a');
+    expect(t(['a', 'a', 'a', 'a', 'a', 'a', 'a'])).toBe('Tous les jours · a');
+    expect(t(['', '', '', '', '', 'b', 'b'])).toBe('Sam, dim · b');
+    expect(t(['', '', '', '', 'c', '', ''])).toBe('Ven · c');
+    expect(t(['a', '', 'a', '', '', '', ''])).toBe('Lun · a ; mer · a');
+    expect(t(['a', 'a', 'b', 'b', 'b', '', ''])).toBe('Lun, mar · a ; mer → ven · b');
+    expect(t(['', '', '', '', '', '', ''])).toBe('');
+  });
+
+  it('NL', () => {
+    expect(t(['a', 'a', 'a', 'a', 'a', '', ''], 1)).toBe('Ma → vr · a');
+    expect(t(['a', 'a', 'a', 'a', 'a', 'a', 'a'], 1)).toBe('Elke dag · a');
+  });
+});
+
+describe('bundleWeek — today and when', () => {
+  it('today\'s slot during the period; none before it', () => {
+    const fri = week(at(2026, 10, 16));
+    expect(fri.rows.map(r => [r.id, r.today])).toEqual([['a', ''], ['c', '']]);
+    const sun = week(at(2026, 10, 18));
+    expect(sun.rows.find(r => r.id === 'a')!.today).toBe('toute la journée');
+    expect(week(at(2026, 10, 2)).rows.every(r => r.today === '')).toBe(true);
+    expect(week(at(2026, 10, 20)).rows.find(r => r.id === 'a')!.when).toBe('Lun · avant 11 h ; dim · toute la journée');
   });
 });
 

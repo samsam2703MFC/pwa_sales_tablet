@@ -56,10 +56,10 @@ describe('app on a BO book', () => {
     // The BO's autumn season (no illustration: placeholder), with its product and the BO photo.
     const season = within(main()).getByRole('article', { name: 'Automne' });
     expect(season.querySelector('img')!.getAttribute('src')).toBe('/img/placeholder.svg');
-    const pills = within(season).getAllByRole('button');
-    expect(pills.map(b => b.textContent)).toEqual(['Couque suisse aux raisins1,60 €']);
-    expect(pills[0].querySelector('img')!.getAttribute('src')).toBe('http://bo.test/consulant_bo/uploads/plano/panel/1610042.png');
-    expect(pills[0].querySelector('img')!.classList.contains('photo')).toBe(true); // cropped to a circle
+    const tiles = within(season).getAllByRole('button');
+    expect(tiles.map(b => b.textContent)).toEqual(['Couque suisse aux raisins1,60 €pièce']);
+    expect(tiles[0].querySelector('img')!.getAttribute('src')).toBe('http://bo.test/consulant_bo/uploads/plano/panel/1610042.png');
+    expect(tiles[0].querySelector('img')!.classList.contains('photo')).toBe(true); // fills its rounded square
     // The bundles of the week (before their period: the weekly pattern), and nothing else.
     expect(within(main()).getByText('Les bundles de la semaine')).toBeTruthy();
     expect(within(main()).getByText('Dès le jeudi 15 octobre')).toBeTruthy();

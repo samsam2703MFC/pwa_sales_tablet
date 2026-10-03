@@ -3,7 +3,7 @@ import { useApp } from '../state/store';
 import s from './ProductPill.module.css';
 
 /**
- * "Puce-produit": rounded pill with the illustration (a BO photo: in a circle), name and (optionally) price.
+ * "Puce-produit": rounded pill with the illustration (a BO photo: in a rounded square), name and (optionally) price.
  * Opens the product sheet (pushing the navigation stack when already in a sheet).
  *
  * Sizes, as in the prototype:

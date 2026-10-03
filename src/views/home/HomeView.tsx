@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PillRow, ProductPill } from '../../components/ProductPill';
+import { ProductTile, ProductTiles } from '../../components/ProductTile';
 import { currentMonth } from '../../lib/date';
 import { useApp } from '../../state/store';
 import type { SeasonVM } from '../../lib/seasons';
@@ -33,31 +33,36 @@ export function HomeView() {
   );
 }
 
-/** "En ce moment" card: illustration, dates, name, instruction and the season's products. */
+/**
+ * "En ce moment" card: a compact head (illustration, dates, name, instruction), then the
+ * season's products as rounded tiles, two per row.
+ */
 function SeasonNow({ season: x }: { season: SeasonVM }) {
   const { L } = useApp();
   const titleId = `home-season-${x.id}`;
   return (
     <article className={s.season} aria-labelledby={titleId}>
-      <img src={x.img} alt="" className={s.seasonImg} />
-      <div className={s.seasonBody}>
-        <div className={s.seasonMeta}>
-          <span className={s.badge}>{L.now}</span>
-          <span className={s.dates}>{x.dates}</span>
-        </div>
-        <h3 id={titleId} className={s.h2}>{x.name}</h3>
-        {x.tip && (
-          <div className={s.tip}>
-            <span className={s.tipLabel}>{L.tipL}</span>
-            <span>{x.tip}</span>
+      <div className={s.seasonHead}>
+        <img src={x.img} alt="" className={s.seasonImg} />
+        <div className={s.seasonBody}>
+          <div className={s.seasonMeta}>
+            <span className={s.badge}>{L.now}</span>
+            <span className={s.dates}>{x.dates}</span>
           </div>
-        )}
-        {x.products.length > 0 && (
-          <PillRow>
-            {x.products.map(p => <ProductPill key={p.id} p={p} size="lg" />)}
-          </PillRow>
-        )}
+          <h3 id={titleId} className={s.h2}>{x.name}</h3>
+          {x.tip && (
+            <div className={s.tip}>
+              <span className={s.tipLabel}>{L.tipL}</span>
+              <span>{x.tip}</span>
+            </div>
+          )}
+        </div>
       </div>
+      {x.products.length > 0 && (
+        <ProductTiles label={x.name}>
+          {x.products.map(p => <ProductTile key={p.id} p={p} />)}
+        </ProductTiles>
+      )}
     </article>
   );
 }

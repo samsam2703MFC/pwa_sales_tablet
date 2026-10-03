@@ -1,4 +1,4 @@
-/* "Les bundles de la semaine" (home page). */
+/* "Les bundles de la semaine" (home page): rounded cards, two per row. */
 
 .block {
   display: flex;
@@ -36,156 +36,134 @@
   color: var(--color-text-muted);
 }
 
-/* Scrolls sideways on narrow screens; the bundle column stays put. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (max-width: 639.98px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* A card fills its grid cell, so the two cards of a row are the same height. */
+.item {
+  display: flex;
+}
+
+/* The time of day (as coloured in the network document) tints the left edge and the days. */
 .card {
-  background: var(--color-surface);
+  flex: 1;
+  --tint: var(--color-background-secondary);
+  --ink: var(--color-text);
+  --edge: var(--color-text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px 16px 20px;
   border-radius: var(--radius-lg);
-  padding: 6px 12px 10px;
-  overflow-x: auto;
+  background: var(--color-surface);
+  box-shadow: inset 5px 0 0 var(--edge);
 }
+.matin { --tint: #FBE6C8; --ink: #7a4a12; --edge: #E8A44A; }
+.midi { --tint: #F3E3E5; --ink: var(--color-primary); --edge: var(--color-primary); }
+.apresMidi { --tint: #E4EEDF; --ink: #3d5a2c; --edge: #7FA56A; }
+.weekend { --tint: #E3E6F1; --ink: #3a4573; --edge: #6E7BB4; }
+.jour { --tint: #ECE4D9; --ink: var(--color-text); --edge: #A8A29A; }
 
-.table {
-  width: 100%;
-  min-width: 760px;
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
-.corner {
-  width: 30%;
-}
-
-.day {
-  padding: 10px 4px 8px;
-  text-align: center;
-  font-weight: 500;
-  font-size: 13px;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.dayName,
-.dayDate {
-  display: block;
-}
-
-.dayDate {
-  font-size: 17px;
-  letter-spacing: 0;
-  color: var(--color-text);
-}
-
-/* Today's column. */
-.today {
-  background: var(--color-row-now);
-}
-.day.today,
-.day.today .dayDate {
-  color: var(--color-primary);
-}
-thead .today {
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-}
-tbody tr:last-child .today {
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
-}
-
-.bundle {
-  padding: 12px 12px 12px 4px;
-  text-align: left;
-  font-weight: 400;
-  vertical-align: top;
-  border-top: 0.5px solid var(--color-border-tertiary);
-}
-
-.nameRow {
+.top {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .name {
-  font-size: 16px;
+  margin: 0;
+  font-size: 18px;
   font-weight: 500;
+  line-height: 1.3;
   color: var(--color-text);
 }
 
 .price {
-  margin-left: auto;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 500;
   color: var(--color-primary);
   white-space: nowrap;
 }
 
 .content {
-  display: block;
-  margin: 2px 0 0 18px;
-  font-size: 14px;
+  margin: 0;
+  font-size: 15px;
   line-height: 1.4;
   color: var(--color-text-muted);
+}
+
+/* Monday → Sunday: the days it runs filled with the tint, today ringed in red. */
+.days {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.day {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: #B4ADA4;
+  background: transparent;
+  border: 1px dashed var(--color-border-secondary);
+}
+.on {
+  color: var(--ink);
+  background: var(--tint);
+  border: 1px solid transparent;
+}
+.isToday {
+  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-primary);
+}
+
+.when {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text);
 }
 
 .meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 8px;
-  margin: 6px 0 0 18px;
+  gap: 6px 8px;
+}
+
+.today {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: #fff;
 }
 
 .channel {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
-  padding: 2px 8px;
+  padding: 2px 10px;
   border-radius: var(--radius-pill);
   border: 0.5px solid var(--color-border-secondary);
   color: var(--color-text);
 }
 
 .note {
-  font-size: 12px;
-  color: var(--color-collection-icon);
-}
-
-.cell {
-  padding: 8px 4px;
-  text-align: center;
-  vertical-align: middle;
-  border-top: 0.5px solid var(--color-border-tertiary);
-}
-
-.slot {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: var(--radius-md);
   font-size: 13px;
-  font-weight: 500;
-  line-height: 1.3;
-}
-
-/* Time of day, as coloured in the network document. */
-.dot {
-  flex: none;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  align-self: center;
-}
-.matin { background: #FBE6C8; color: #7a4a12; }
-.midi { background: #F3E3E5; color: var(--color-primary); }
-.apresMidi { background: #E4EEDF; color: #3d5a2c; }
-.weekend { background: #E3E6F1; color: #3a4573; }
-.jour { background: var(--color-background-secondary); color: var(--color-text); }
-.dot.matin { background: #E8A44A; }
-.dot.midi { background: var(--color-primary); }
-.dot.apresMidi { background: #7FA56A; }
-.dot.weekend { background: #6E7BB4; }
-.dot.jour { background: var(--color-text-muted); }
-
-/* Portrait: narrower bundle column and slots. */
-@media (max-width: 999.98px) {
-  .corner { width: 27%; }
-  .slot { padding: 4px 5px; font-size: 12px; }
+  color: var(--color-collection-icon);
 }

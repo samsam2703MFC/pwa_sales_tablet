@@ -91,12 +91,16 @@ const BUNDLE_LABELS = pair(
     title: 'Les bundles de la semaine', from: 'Dès le', today: "Aujourd'hui", only: 'Seulement à', colon: ' : ',
     period: (a: string, b: string) => `Du ${a} au ${b}`, bundle: 'Bundle',
     days: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+    initials: ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
+    span: ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'], everyDay: 'tous les jours',
     channels: { cc: 'Click & collect', delivery: 'Livraison' },
   },
   {
     title: 'De bundels van de week', from: 'Vanaf', today: 'Vandaag', only: 'Alleen in', colon: ': ',
     period: (a: string, b: string) => `Van ${a} tot ${b}`, bundle: 'Bundel',
     days: ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'],
+    initials: ['M', 'D', 'W', 'D', 'V', 'Z', 'Z'],
+    span: ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'], everyDay: 'elke dag',
     channels: { cc: 'Click & collect', delivery: 'Levering' },
   },
 );

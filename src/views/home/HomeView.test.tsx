@@ -34,9 +34,12 @@ describe('HomeView', () => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Bonjour !');
     expect(screen.getAllByRole('heading', { level: 2 }).map(h => h.textContent)).toEqual(['La gamme actuelle', 'Les bundles de la semaine']);
     const range = screen.getByRole('region', { name: 'La gamme actuelle' });
-    expect(within(range).getByRole('article', { name: 'Automne' })).toBeTruthy();
+    const season = within(range).getByRole('article', { name: 'Automne' });
+    // the season's products: rounded tiles, two per row (name and price)
+    const tiles = within(within(season).getByRole('group', { name: 'Automne' })).getAllByRole('button');
+    expect(tiles.map(b => b.textContent)).toEqual(['Brioche croustillante4,20 €pièce']);
     // range first, then the bundles
-    const bundles = screen.getAllByRole('region', { name: 'Les bundles de la semaine' })[0];
+    const bundles = screen.getByRole('region', { name: 'Les bundles de la semaine' });
     expect(range.compareDocumentPosition(bundles) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // gone from the home page: quick asks, remark form, targets, onboarding banner, next season, best sellers
     expect(screen.queryByRole('group', { name: 'Le client demande…' })).toBeNull();
@@ -48,29 +51,39 @@ describe('HomeView', () => {
     expect(screen.getAllByText('En ce moment')).toHaveLength(1);
   });
 
-  it('bundles before the period (2 October): the weekly pattern, "Dès le jeudi 15 octobre"', () => {
+  /** A bundle card by name, its texts with no-break spaces read as spaces. */
+  const bundle = (name: string) => screen.getByRole('article', { name });
+  const text = (el: Element) => el.textContent!.replace(/\u00a0/g, ' ');
+
+  it('bundles before the period (2 October): rounded cards, the weekly pattern, "Dès le jeudi 15 octobre"', () => {
     renderHome(0);
     expect(screen.getByText('Dès le jeudi 15 octobre')).toBeTruthy();
     expect(screen.getByText('Du 15 octobre au 15 décembre')).toBeTruthy();
-    const table = screen.getByRole('table');
-    expect(within(table).getAllByRole('columnheader').slice(1).map(h => h.textContent)).toEqual(['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']);
-    // sample data, no shop: every bundle, the shop-only one says where
-    expect(within(table).getAllByRole('rowheader')).toHaveLength(8);
-    const lunch = within(table).getByRole('rowheader', { name: /^Le lunch/ }).closest('tr')!;
-    expect([...lunch.querySelectorAll('td')].map(td => td.textContent!.replace(/\u00a0/g, ' '))).toEqual(['11 → 14 h', '11 → 14 h', '11 → 14 h', '11 → 14 h', '11 → 14 h', '', '']);
+    // sample data, no shop: every bundle, as a list of cards; the shop-only one says where
+    const cards = within(screen.getByRole('list')).getAllByRole('listitem');
+    expect(cards).toHaveLength(8);
+    expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent).slice(1)).toEqual([
+      'Offre site', 'Le petit-déj', 'Le lunch', 'Formule bureau', 'Le goûter', 'Quiche + tarte', '4 + 2 croissants', 'Grands formats',
+    ]);
+    const lunch = bundle('Le lunch');
     expect(within(lunch).getByText('8,50 €')).toBeTruthy();
-    expect(within(table).getByText('Seulement à Gosselies, Halle, Sombreffe · Halle : ½ quiche + ½ tarte')).toBeTruthy();
+    expect(within(lunch).getByText('Flip & Flap + boisson + éclair')).toBeTruthy();
+    expect(text(within(lunch).getByText(/^Lun → ven/))).toBe('Lun → ven · 11 → 14 h');
+    expect(text(within(bundle('Le goûter')).getByText(/^Tous les jours/))).toBe('Tous les jours · 14 → 17 h');
+    expect(within(bundle('Quiche + tarte')).getByText('Seulement à Gosselies, Halle, Sombreffe · Halle : ½ quiche + ½ tarte')).toBeTruthy();
+    expect(within(bundle('4 + 2 croissants')).getByText('Click & collect')).toBeTruthy();
+    // nothing runs "today" before the period
+    expect(screen.queryByText(/^Aujourd'hui/)).toBeNull();
   });
 
-  it('bundles during the period: dates and today\'s column (Friday 16 October)', () => {
+  it('bundles during the period (Friday 16 October): "Aujourd\'hui" on the bundles of the day', () => {
     vi.setSystemTime(new Date(2026, 9, 16, 12));
     renderHome(0);
     expect(screen.queryByText(/^Dès le/)).toBeNull();
-    const heads = within(screen.getByRole('table')).getAllByRole('columnheader').slice(1);
-    expect(heads.map(h => h.textContent)).toEqual(['Lun12', 'Mar13', 'Mer14', 'Jeu15', 'Ven16 (Aujourd\'hui)', 'Sam17', 'Dim18']);
+    expect(text(within(bundle('Le petit-déj')).getByText(/^Aujourd'hui/))).toBe("Aujourd'hui · avant 11 h");
     // Monday to Wednesday are before the period
-    const petitDej = screen.getByRole('rowheader', { name: /^Le petit-déj/ }).closest('tr')!;
-    expect([...petitDej.querySelectorAll('td')].map(td => td.textContent!.replace(/\u00a0/g, ' '))).toEqual(['', '', '', 'avant 11 h', 'avant 11 h', '', '']);
+    expect(text(within(bundle('Le petit-déj')).getByText(/^Jeu, ven/))).toBe('Jeu, ven · avant 11 h');
+    expect(within(bundle('4 + 2 croissants')).queryByText(/^Aujourd'hui/)).toBeNull();
   });
 
   it('renders in NL', () => {
@@ -85,7 +98,7 @@ describe('HomeView', () => {
   it('shows every season running this month (December: Saint-Nicolas and Christmas)', () => {
     vi.setSystemTime(new Date(2026, 11, 3, 12));
     renderHome(0);
-    const seasons = screen.getAllByRole('article');
+    const seasons = within(screen.getByRole('region', { name: 'La gamme actuelle' })).getAllByRole('article');
     expect(seasons).toHaveLength(2);
     expect(seasons[0]).toBe(screen.getByRole('article', { name: 'Saint-Nicolas' }));
     expect(seasons[1]).toBe(screen.getByRole('article', { name: 'Noël & Nouvel An' }));
