@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BUNDLE_SHOPS, BUNDLES, type BundlePlan } from '../../data/bundles';
-import { bundleWeek, whenLabel, type BundleWeekVM } from './bundles.logic';
+import { bundlesForProduct, bundleWeek, inBundle, whenLabel, type BundleWeekVM } from './bundles.logic';
 
 const PLAN: BundlePlan = {
   from: '2026-10-15',
@@ -141,5 +141,41 @@ describe('the network bundles (document of 2 October 2026)', () => {
       ['Offre site', '−20 %'], ['Le petit-déj', '3,50 €'], ['Le lunch', '8,50 €'], ['Formule bureau', '7,90 €'],
       ['Le goûter', '4,50 €'], ['Quiche + tarte', '19,90 €'], ['4 + 2 croissants', '6,90 €'], ['Grands formats', '19,90 €'],
     ]);
+  });
+});
+
+describe('the bundles of a product (product sheet)', () => {
+  const B = (id: string) => BUNDLES.bundles.find(b => b.id === id)!;
+  const p = (name: string, cat: string, price: number | null = 2) => ({ name, cat, price });
+
+  it('inBundle: by category or name, accents, case, spaces and punctuation ignored; a minimum price', () => {
+    expect(inBundle(B('petitdej'), p('Croissant', 'Viennoiserie'))).toBe(true);
+    expect(inBundle(B('petitdej'), p('Croissant', 'Viennoiseries'))).toBe(true);
+    expect(inBundle(B('lunch'), p('FlipFlap - Club', 'Traiteur'))).toBe(true);
+    expect(inBundle(B('lunch'), p('Flip & Flap thon', 'Snacking'))).toBe(true);
+    expect(inBundle(B('gouter'), p('Éclair chocolat', 'Pâtisserie'))).toBe(true);
+    expect(inBundle(B('grands'), p('Tarte aux pommes 28 cm', 'Tartes', 24.5))).toBe(true);
+    expect(inBundle(B('grands'), p('1/4', 'Tartes', 6.2))).toBe(false);
+    expect(inBundle(B('grands'), p('Tarte', 'Tartes', null))).toBe(false);
+    // no match rule: never on a product sheet
+    expect(inBundle(B('site'), p('Croissant', 'Viennoiserie'))).toBe(false);
+    expect(inBundle(B('bureau'), p('FlipFlap - Club', 'Traiteur'))).toBe(false);
+  });
+
+  it('the shop\'s bundles of the product, with their days, today and the start', () => {
+    const quiche = p('Quiche Lorraine', 'Quiches', 4.5);
+    expect(bundlesForProduct(quiche, at(2026, 10, 2), '2', 0)).toEqual([]); // not at Corbais
+    const [halle] = bundlesForProduct(quiche, at(2026, 10, 2), '4', 0);
+    expect({ ...halle, when: halle.when.replace(/\u00a0/g, ' ') }).toEqual({
+      id: 'quichetarte', name: 'Quiche + tarte', price: '19,90 €', content: '½ quiche + ½ tarte', channel: '', section: 'weekend',
+      when: 'Ven → dim · toute la journée', today: '', start: 'Dès le jeudi 15 octobre',
+    });
+    const sat = bundlesForProduct(quiche, at(2026, 10, 17), '3', 1)[0];
+    expect([sat.content, sat.today.replace(/\u00a0/g, ' '), sat.start]).toEqual(['1 quiche + ¼ taart', 'Vandaag · de hele dag', '']);
+    const croissant = bundlesForProduct(p('Croissant', 'Viennoiserie'), at(2026, 10, 19), '2', 0);
+    expect(croissant.map(b => [b.id, b.today.replace(/\u00a0/g, ' '), b.channel])).toEqual([
+      ['petitdej', "Aujourd'hui · avant 11 h", ''], ['croissants', '', 'Click & collect'],
+    ]);
+    expect(bundlesForProduct(p('Croissant', 'Viennoiserie'), at(2026, 12, 16), '2', 0)).toEqual([]);
   });
 });

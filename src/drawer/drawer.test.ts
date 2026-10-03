@@ -3,7 +3,7 @@ import type { FaqItem } from '../data/types';
 import { PRODUCTS } from '../lib/catalog';
 import { FIXTURE_BOOK as F, FIXTURE_CATALOG as LK, product } from '../test/fixtures';
 import {
-  allergenGrid, allergenState, availability, backName, isCloseSwipe, productFaq, sheetVM,
+  allergenGrid, allergenState, availability, backName, comboVM, isCloseSwipe, productFaq, salesArgs, sheetVM,
 } from './drawer.logic';
 
 const P = (id: string) => LK.products[id]!;
@@ -185,6 +185,45 @@ describe('sample data (prototype golden values)', () => {
     expect(s.faq.map(f => f.open)).toEqual([true, false]);
     expect(s.cross.map(c => c.name)).toEqual(['Croissant met roomboter', 'Pistolet']);
     expect([sheetVM('campagne', -1, 0)!.dlc, sheetVM('campagne', -1, 1)!.dlc]).toEqual(['5 jours', '5 dagen']);
+  });
+});
+
+describe('salesArgs', () => {
+  it('best seller, season, shelf life, diet — only what the book knows', () => {
+    expect(salesArgs(product('x', { best: true, season: 's1', dlc: 1, diet: 'vege' }), 0, LK.seasons)).toEqual([
+      'Une de nos meilleures ventes au comptoir.',
+      "De la gamme Printemps (mars – avril) : à proposer tant qu'elle est là.",
+      "Fait du jour : à savourer aujourd'hui, bien frais.",
+      'Végétarien.',
+    ]);
+    expect(salesArgs(product('y', { dlc: 4, diet: 'vegan' }), 1, LK.seasons)).toEqual([
+      'Blijft 4 dagen goed: makkelijk om mee te nemen voor later.', 'Vegan: zonder enig dierlijk product.',
+    ]);
+    // nothing known: no argument (immediate shelf life, unknown season, no diet)
+    expect(salesArgs(product('z', { dlc: 0, season: 'ghost' }), 0, LK.seasons)).toEqual([]);
+  });
+});
+
+describe('comboVM', () => {
+  it('what to offer, then when, nickname and target on one line; products of B as cards', () => {
+    const c = comboVM({ with: ['Boissons chaudes', ''], when: ['Matin (avant 11 h)', 'Ochtend (voor 11 u)'], name: ['le petit-déj complet', ''], target: 7.5, items: ['p1', 'ghost'] }, 1, LK);
+    expect([c.with, c.meta, c.items.map(i => i.id)]).toEqual([
+      'Boissons chaudes', 'Ochtend (voor 11 u) · « le petit-déj complet » · netwerkdoel: 7,5 % van de tickets', ['p1'],
+    ]);
+    expect(comboVM({ with: ['Cookies', ''], when: ['', ''], name: ['', ''], target: null, items: [] }, 0, LK).meta).toBe('');
+  });
+});
+
+describe('sheetVM — sales', () => {
+  const ctx = { today: new Date(2026, 9, 20, 12), shop: '2' };
+  it('combos first, the other cross-sell products after; the bundles of the shop', () => {
+    const book = { ...F, products: F.products.map(p => (p.id === 'p2' ? { ...p, cross: ['p1', 'p3'], combos: [{ with: ['B', ''] as const, when: ['', ''] as const, name: ['', ''] as const, target: 10, items: ['p1'] }] } : p)) };
+    const vm = sheetVM('p2', -1, 0, book, ctx)!;
+    expect(vm.combos.map(c => [c.with, c.meta, c.items.map(i => i.id)])).toEqual([['B', 'objectif réseau : 10 % des tickets', ['p1']]]);
+    expect(vm.crossRest.map(c => c.id)).toEqual(['p3']);
+    expect(vm.cross.map(c => c.id)).toEqual(['p1', 'p3']);
+    // the fixture categories are not in any bundle
+    expect(vm.bundles).toEqual([]);
   });
 });
 

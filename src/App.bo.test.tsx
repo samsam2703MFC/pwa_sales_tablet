@@ -101,10 +101,16 @@ describe('app on a BO book', () => {
     expect(within(d).getByText("À vérifier sur l'étiquette")).toBeTruthy();
     expect(within(d).getByText('Détail : Contient : gluten, lait, œuf. Traces : fruits à coque.')).toBeTruthy();
     // no tile claims the product is free of an allergen
-    expect(within(d).queryAllByRole('listitem')).toHaveLength(0);
+    expect(d.querySelector('[class*="alGrid"]')).toBeNull();
     expect(within(d).queryByText('Contient')).toBeNull();
-    // pitch, description, ingredients and cross-sell are empty: left out
-    expect(within(d).getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual(['Allergènes', 'Durée', 'Conservation']);
+    // pitch, description, ingredients and cross-sell are empty: left out; the arguments come from
+    // the facts (best seller, same day, vegetarian), its bundles from the network document
+    expect(within(d).getAllByRole('heading', { level: 3 }).map(h => h.textContent))
+      .toEqual(['Arguments de vente', 'Dans les menus & bundles', 'Allergènes', 'Durée', 'Conservation']);
+    expect(within(d).getByText('Une de nos meilleures ventes au comptoir.')).toBeTruthy();
+    expect(within(d).getByText('Végétarien.')).toBeTruthy();
+    expect(within(d).getByText('Le petit-déj')).toBeTruthy();
+    expect(within(d).getAllByText('Dès le jeudi 15 octobre')).toHaveLength(2);
     const keep = within(d).getByText('Température ambiante. Réchauffe 3 min à 180 °C.');
     expect(keep.className).not.toContain('keepNone');
     fireEvent.click(within(d).getByRole('button', { name: 'Fermer' }));
@@ -113,7 +119,14 @@ describe('app on a BO book', () => {
   it('product sheet: "Conservation" is always there, "Non renseignée" (muted) when the BO has no text', () => {
     fireEvent.click(within(main()).getByRole('button', { name: /Couque suisse aux raisins/ }));
     const d = screen.getByRole('dialog', { name: 'Couque suisse aux raisins' });
-    expect(within(d).getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual(['Allergènes', 'Durée', 'Conservation', 'Proposez aussi']);
+    expect(within(d).getAllByRole('heading', { level: 3 }).map(h => h.textContent))
+      .toEqual(['Arguments de vente', 'Proposez aussi', 'Dans les menus & bundles', 'Allergènes', 'Durée', 'Conservation']);
+    // What to offer with it: the network's combos, with B's products when they are in the book
+    const combos = within(d).getByText('Proposez aussi').parentElement!;
+    expect(within(combos).getByText('Boissons chaudes')).toBeTruthy();
+    expect(within(combos).getByText('Matin (avant 11 h) · « le petit-déj complet » · objectif réseau : 7,5 % des tickets')).toBeTruthy();
+    expect(within(combos).getByText('Croissants')).toBeTruthy();
+    expect(within(combos).getAllByRole('button').map(b => b.textContent)).toEqual(['Croissant au beurre AOP1,30 €']);
     const none = within(d).getByText('Non renseignée');
     expect(none.previousElementSibling?.textContent).toBe('Conservation');
     expect(none.className).toContain('keepNone');

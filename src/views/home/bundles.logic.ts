@@ -78,6 +78,74 @@ export function whenLabel(cells: readonly string[], lang: Lang): string {
 /** Does the bundle run in this shop (null: not tied to a shop → every bundle)? */
 const inShop = (b: Bundle, shop: string | null) => !shop || !b.shops || b.shops.includes(shop);
 
+/** "jeudi 15 octobre" / "donderdag 15 oktober". */
+const longDate = (d: Date, lang: Lang) => d.toLocaleDateString(locale(lang), { weekday: 'long', day: 'numeric', month: 'long' });
+
+/** Lower case, no accents, spaces nor punctuation: "Flip & Flap" → "flipflap". */
+const norm = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+/** What the product sheet knows of a product to find its bundles: French name, French category name, price. */
+export interface BundleProduct {
+  name: string;
+  cat: string;
+  price: number | null;
+}
+
+/** Is the product one the bundle is made of (see `Bundle.match`)? */
+export function inBundle(b: Bundle, p: BundleProduct): boolean {
+  const m = b.match;
+  if (!m || (m.minPrice !== undefined && (p.price === null || p.price < m.minPrice))) return false;
+  const cat = norm(p.cat), name = norm(p.name);
+  return (m.cats ?? []).some(c => cat.includes(norm(c))) || (m.names ?? []).some(n => name.includes(norm(n)));
+}
+
+/** A bundle on the product sheet ("Dans les menus & bundles"). */
+export interface ProductBundleVM {
+  id: string;
+  name: string;
+  /** "3,50 €", or the discount. */
+  price: string;
+  content: string;
+  /** "Click & collect" / "Livraison"; '' in the shop. */
+  channel: string;
+  section: BundleSection;
+  /** Its days and time in words, e.g. "Lun → ven · avant 11 h". */
+  when: string;
+  /** "Aujourd'hui · avant 11 h" when it runs today, else ''. */
+  today: string;
+  /** "Dès le jeudi 15 octobre" before the period, else ''. */
+  start: string;
+}
+
+/**
+ * The bundles a product is part of, in this shop: its weekly days and time, whether it runs
+ * today, or when the period starts. [] after the period.
+ */
+export function bundlesForProduct(p: BundleProduct, today: Date, shop: string | null, lang: Lang, plan: BundlePlan = BUNDLES): ProductBundleVM[] {
+  const t = iso(today);
+  if (t > plan.to) return [];
+  const L = bundleLabels(lang);
+  const during = t >= plan.from;
+  const dayIdx = (today.getDay() + 6) % 7;
+  const start = during ? '' : `${L.from} ${longDate(parse(plan.from), lang)}`;
+  return plan.bundles
+    .filter(b => inShop(b, shop) && inBundle(b, p))
+    .map(b => {
+      const cells = DAYS.map(n => glue(tr(b.days[n], lang)));
+      return {
+        id: b.id,
+        name: tr(b.name, lang),
+        price: b.price !== null ? fmtPrice(b.price) : glue(tr(b.offer, lang)),
+        content: tr((shop && b.shopContent?.[shop]) || b.content, lang),
+        channel: b.channel === 'shop' ? '' : L.channels[b.channel],
+        section: b.section,
+        when: whenLabel(cells, lang),
+        today: during && cells[dayIdx] ? `${L.today} · ${cells[dayIdx]}` : '',
+        start,
+      };
+    });
+}
+
 /**
  * The bundles of the week of `today` (Monday → Sunday) for `shop`: each with its slot per day.
  * Before the period, the weekly pattern (no dates) with "Dès le …"; a week that overlaps the
@@ -118,11 +186,10 @@ export function bundleWeek(today: Date, shop: string | null, lang: Lang, plan: B
     .map(r => ({ ...r, when: whenLabel(r.cells, lang), today: todayIdx >= 0 ? r.cells[todayIdx] : '' }));
   if (!rows.length) return null;
 
-  const long = (d: Date) => d.toLocaleDateString(loc, { weekday: 'long', day: 'numeric', month: 'long' });
   const short = (d: Date) => d.toLocaleDateString(loc, { day: 'numeric', month: 'long' });
   return {
     upcoming,
-    start: t < plan.from ? `${L.from} ${long(parse(plan.from))}` : '',
+    start: t < plan.from ? `${L.from} ${longDate(parse(plan.from), lang)}` : '',
     period: L.period(short(parse(plan.from)), short(parse(plan.to))),
     days: DAYS.map(n => ({ n, label: L.days[n - 1], date: upcoming ? '' : String(dates[n - 1].getDate()), today: !upcoming && iso(dates[n - 1]) === t })),
     rows,

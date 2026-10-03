@@ -97,6 +97,11 @@ describe('validateBook', () => {
     expect(validateBook(b)).toEqual(['faqSubs : id en double « qa »', 'faqSubs : « all » est réservé (chip « Tout »)']);
   });
 
+  it('reports unknown product ids in the combos of a product', () => {
+    const b = withChange(b => { product(b, 'p2').combos = [{ with: ['B', ''], when: ['', ''], name: ['', ''], target: null, items: ['p1', 'p0'] }]; });
+    expect(validateBook(b)).toEqual(['p2.combos[0].items : id inconnu « p0 »']);
+  });
+
   it('reports duplicate and reserved ids', () => {
     const b = withChange(b => {
       b.products.push({ ...product(b, 'p5') });

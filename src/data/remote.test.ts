@@ -174,6 +174,20 @@ describe('mergeBook', () => {
     expect(b.products[0].cross).toEqual(['b']);
   });
 
+  it('combos: malformed ones dropped (not the product), unknown product ids dropped at the merge', () => {
+    const couque = parsePayload(payload())!.book.products[1];
+    expect(couque.combos).toEqual([
+      { with: ['Boissons chaudes', ''], when: ['Matin (avant 11 h)', 'Ochtend (voor 11 u)'], name: ['le petit-déj complet', ''], target: 7.5, items: [] },
+      { with: ['Croissants', ''], when: ['', ''], name: ['', ''], target: null, items: ['1610006', 'ghost'] },
+    ]);
+    const b = mergeBook(SAMPLE_BOOK, parsePayload(payload())!.book, PUB);
+    expect(b.products[1].combos![1].items).toEqual(['1610006']);
+    // no combos: no field; a target outside 0–100 makes the combo malformed
+    expect('combos' in b.products[0]).toBe(false);
+    const odd = parsePayload(payload(p => { (p.book.products[1] as Record<string, unknown>).combos = [{ avec: ['X', ''], cible: 140 }, 'nope']; }))!;
+    expect('combos' in odd.book.products[1]).toBe(false);
+  });
+
   it('gives a consistent book (src/data/validate.ts)', () => {
     expect(validateBook(merged())).toEqual([]);
   });

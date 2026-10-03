@@ -1,6 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type TouchEvent } from 'react';
 import { PillRow, ProductPill } from '../components/ProductPill';
 import { PRODUCTS } from '../lib/catalog';
+import { saleLabels } from '../lib/i18n';
 import { useApp } from '../state/store';
 import { backName, isCloseSwipe, sheetVM, type AllergenState } from './drawer.logic';
 import { AllergenIcon } from '../components/AllergenIcon';
@@ -30,6 +31,7 @@ export function ProductDrawer() {
 function Sheet() {
   const { state, actions, lang, L, compact } = useApp();
   const vm = useMemo(() => sheetVM(state.sel, state.selFaq, lang), [state.sel, state.selFaq, lang]);
+  const S = saleLabels(lang);
   const back = backName(state.stack, lang);
   const panel = useRef<HTMLDivElement>(null);
   const swipe = useRef<{ x: number; y: number } | null>(null);
@@ -153,6 +155,67 @@ function Sheet() {
 
           {vm.desc && <p className={s.desc}>{vm.desc}</p>}
 
+          {/* Shop request: what helps to sell comes first — arguments, what to offer with it, its bundles. */}
+          {vm.args.length > 0 && (
+            <div className={s.args}>
+              <h3 className={s.eyebrow}>{S.args}</h3>
+              <ul className={s.argList}>
+                {vm.args.map((a, i) => <li key={i}>{a}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {(vm.crossLine || vm.combos.length > 0 || vm.crossRest.length > 0) && (
+            <div className={s.also}>
+              <h3 className={s.eyebrow}>{L.also}</h3>
+              {vm.crossLine && <span className={s.crossLine}>« {vm.crossLine} »</span>}
+              {vm.combos.map((c, i) => (
+                <div key={i} className={s.combo}>
+                  <div className={s.comboHead}>
+                    <span className={s.comboWith}><span aria-hidden="true">+ </span>{c.with}</span>
+                    {c.meta && <span className={s.comboMeta}>{c.meta}</span>}
+                  </div>
+                  {c.items.length > 0 && (
+                    <PillRow gap={8}>
+                      {c.items.map((m, j) => <ProductPill key={j + '-' + m.id} p={m} size="md" hover />)}
+                    </PillRow>
+                  )}
+                </div>
+              ))}
+              {vm.crossRest.length > 0 && (
+                <PillRow>
+                  {/* Keyed by position: hand-entered data may repeat an id (duplicate keys left a stale pill on product switch). */}
+                  {vm.crossRest.map((m, i) => <ProductPill key={i + '-' + m.id} p={m} size="lg" hover />)}
+                </PillRow>
+              )}
+            </div>
+          )}
+
+          {vm.bundles.length > 0 && (
+            <div className={s.bundles}>
+              <h3 className={s.eyebrow}>{S.bundles}</h3>
+              <ul className={s.bundleList}>
+                {vm.bundles.map(b => (
+                  <li key={b.id} className={`${s.bundle} ${s[b.section]}`}>
+                    <span className={s.bundleTop}>
+                      <span className={s.bundleName}>{b.name}</span>
+                      <span className={s.bundlePrice}>{b.price}</span>
+                    </span>
+                    <span className={s.bundleContent}>{b.content}</span>
+                    <span className={s.bundleWhen}>{b.when}</span>
+                    {(b.today || b.start || b.channel) && (
+                      <span className={s.bundleMeta}>
+                        {b.today && <span className={s.bundleToday}>{b.today}</span>}
+                        {b.start && <span className={s.bundleStart}>{b.start}</span>}
+                        {b.channel && <span className={s.bundleChannel}>{b.channel}</span>}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className={s.allergens}>
             <div className={s.alHead}>
               <h3 className={s.eyebrow}>{L.alg}</h3>
@@ -226,19 +289,6 @@ function Sheet() {
                   </div>
                 );
               })}
-            </div>
-          )}
-
-          {(vm.crossLine || vm.cross.length > 0) && (
-            <div className={s.also}>
-              <h3 className={s.eyebrow}>{L.also}</h3>
-              {vm.crossLine && <span className={s.crossLine}>« {vm.crossLine} »</span>}
-              {vm.cross.length > 0 && (
-                <PillRow>
-                  {/* Keyed by position: hand-entered data may repeat an id (duplicate keys left a stale pill on product switch). */}
-                  {vm.cross.map((m, i) => <ProductPill key={i + '-' + m.id} p={m} size="lg" hover />)}
-                </PillRow>
-              )}
             </div>
           )}
         </div>

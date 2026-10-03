@@ -51,6 +51,22 @@ export interface Product {
   /** Ids of cross-sell products. */
   cross: string[];
   crossLine: T2;
+  /** The network's combos where this product is the "A" side (BO, screen Croisements). */
+  combos?: ProductCombo[];
+}
+
+/** A network combo: what to offer with the product, when, and the network's attach target. */
+export interface ProductCombo {
+  /** What to offer ("B"), e.g. "Boissons chaudes". */
+  with: T2;
+  /** When; ['', ''] = all day. */
+  when: T2;
+  /** The combo's nickname, e.g. "le déjeuner complet"; ['', ''] when none. */
+  name: T2;
+  /** Target, in % of the tickets with the product that also have B; null when none. */
+  target: number | null;
+  /** The products of B in the book (none when B is not sold at the counter, like drinks). */
+  items: string[];
 }
 
 export interface Season {

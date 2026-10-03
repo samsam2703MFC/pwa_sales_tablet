@@ -157,7 +157,9 @@ test.describe('data from the back-office', () => {
     const sheet = page.getByRole('dialog', { name: 'Croissant au beurre AOP' });
     await expect(sheet.getByText("À vérifier sur l'étiquette")).toBeVisible();
     await expect(sheet.getByText('Détail : Contient : gluten, lait, œuf. Traces : fruits à coque.')).toBeVisible();
-    await expect(sheet.getByRole('listitem')).toHaveCount(0);
+    await expect(sheet.locator('[class*="alGrid"]')).toHaveCount(0);
+    // the sales arguments come from what the book knows (best seller, same day, vegetarian)
+    await expect(sheet.getByText('Une de nos meilleures ventes au comptoir.')).toBeVisible();
     await expect(sheet.getByRole('heading', { name: 'À dire au client' })).toHaveCount(0);
     await expect(sheet.getByRole('heading', { name: 'Proposez aussi' })).toHaveCount(0);
     await expect(sheet.getByText('Température ambiante. Réchauffe 3 min à 180 °C.')).toBeVisible();

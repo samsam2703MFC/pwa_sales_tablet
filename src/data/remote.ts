@@ -1,5 +1,5 @@
 import { SAMPLE_SOURCE } from './book';
-import type { BookData, BookSource, Category, Diet, Product, Season, T2 } from './types';
+import type { BookData, BookSource, Category, Diet, Product, ProductCombo, Season, T2 } from './types';
 
 /**
  * The book sent by the back-office (GET `<API>/tablette/book?shop=<id>`, contract
@@ -79,9 +79,30 @@ const name = (v: unknown): T2 => {
 const idList = (v: unknown): string[] => (v == null ? [] : Array.isArray(v) && v.every(isStr) ? [...v] : bad());
 const id = (v: unknown): string => (isStr(v) && v.trim() ? v : bad());
 
+const isTarget = (v: unknown): v is number | null => v === null || (typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 100);
+
+/** A combo of a product (`combos`, contract "book"): `avec` is required. */
+const toCombo = (v: unknown): ProductCombo => {
+  const c = isRec(v) ? v : bad();
+  return { with: name(c.avec), when: text(c.quand), name: text(c.nom), target: opt(c.cible, isTarget, null), items: idList(c.ids) };
+};
+
+/** The valid combos of a product; a malformed combo is dropped, not the product. */
+const comboList = (v: unknown): ProductCombo[] =>
+  Array.isArray(v)
+    ? v.flatMap(c => {
+      try {
+        return [toCombo(c)];
+      } catch {
+        return [];
+      }
+    })
+    : [];
+
 /** A product row. Required: id, cat, French name, price (number or null), al, dlc (days). */
 const toProduct = (v: Rec): Product => {
   const season = opt(v.season, isStr, '');
+  const combos = comboList(v.combos);
   return {
     id: id(v.id), cat: id(v.cat), ...(season ? { season } : {}), img: opt(v.img, isStr, ''),
     price: 'price' in v ? req(v.price, isPrice) : bad(),
@@ -92,6 +113,7 @@ const toProduct = (v: Rec): Product => {
     alKnown: opt(v.alKnown, isBool, false), trKnown: opt(v.trKnown, isBool, false), alRaw: opt(v.alRaw, isStr, ''),
     diet: opt(v.diet, isDiet, null), keep: text(v.keep), dlc: req(v.dlc, isDays),
     cross: idList(v.cross), crossLine: text(v.crossLine),
+    ...(combos.length ? { combos } : {}),
   };
 };
 
@@ -174,6 +196,7 @@ export function mergeBook(sample: BookData, remote: RemotePayload['book'], publi
       alKnown: p.alKnown === true && al.length === p.al.length,
       trKnown: p.trKnown === true && p.tr.every(a => allergenIds.has(a)),
       cross: known(p.cross),
+      ...(p.combos ? { combos: p.combos.map(c => ({ ...c, items: known(c.items) })) } : {}),
     };
   });
 

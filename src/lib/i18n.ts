@@ -85,6 +85,32 @@ const OBJ_LABELS = pair(
 export type ObjLabels = (typeof OBJ_LABELS)[0];
 export const objLabels = (lang: Lang): ObjLabels => OBJ_LABELS[lang];
 
+/** Product sheet: sales arguments, network combos, bundles (src/drawer/drawer.logic.ts). */
+const SALE_LABELS = pair(
+  {
+    args: 'Arguments de vente', bundles: 'Dans les menus & bundles', offer: 'Proposez',
+    target: (n: string) => `objectif réseau : ${n} % des tickets`,
+    best: 'Une de nos meilleures ventes au comptoir.',
+    season: (name: string, dates: string) => `De la gamme ${name}${dates ? ` (${dates})` : ''} : à proposer tant qu'elle est là.`,
+    dlc1: 'Fait du jour : à savourer aujourd\'hui, bien frais.',
+    dlcN: (n: number) => `Se garde ${n} jours : facile à prendre pour plus tard.`,
+    vegan: 'Vegan : sans aucun produit d\'origine animale.',
+    vege: 'Végétarien.',
+  },
+  {
+    args: 'Verkoopargumenten', bundles: "In menu's & bundels", offer: 'Stel voor',
+    target: (n: string) => `netwerkdoel: ${n} % van de tickets`,
+    best: 'Een van onze bestverkopers aan de toonbank.',
+    season: (name: string, dates: string) => `Uit het assortiment ${name}${dates ? ` (${dates})` : ''}: voorstellen zolang het er is.`,
+    dlc1: 'Van vandaag: vandaag nog lekker vers opeten.',
+    dlcN: (n: number) => `Blijft ${n} dagen goed: makkelijk om mee te nemen voor later.`,
+    vegan: 'Vegan: zonder enig dierlijk product.',
+    vege: 'Vegetarisch.',
+  },
+);
+export type SaleLabels = (typeof SALE_LABELS)[0];
+export const saleLabels = (lang: Lang): SaleLabels => SALE_LABELS[lang];
+
 /** "Les bundles de la semaine" (home page, src/data/bundles.ts). */
 const BUNDLE_LABELS = pair(
   {

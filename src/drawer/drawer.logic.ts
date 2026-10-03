@@ -1,8 +1,11 @@
-import { BOOK } from '../data/book';
-import type { Allergen, BookData, FaqItem, Lang, Product, Season } from '../data/types';
-import { allergensUnknown, cardsByIds, catalogOf, PRODUCTS, SEASONS, toCard, tr, type Lookup, type ProductCardVM } from '../lib/catalog';
+import { BOOK, BOOK_SOURCE } from '../data/book';
+import type { Allergen, BookData, FaqItem, Lang, Product, ProductCombo, Season } from '../data/types';
+import { allergensUnknown, cardsByIds, catalogOf, PRODUCTS, SEASONS, toCard, tr, type Catalog, type Lookup, type ProductCardVM } from '../lib/catalog';
+import { config } from '../lib/config';
+import { now } from '../lib/date';
 import { dlcLabel } from '../lib/format';
-import { labels } from '../lib/i18n';
+import { labels, locale, saleLabels } from '../lib/i18n';
+import { bundlesForProduct, type ProductBundleVM } from '../views/home/bundles.logic';
 
 /** How a product relates to one of the 14 allergens. */
 export type AllergenState = 'contains' | 'traces' | 'absent';
@@ -49,7 +52,32 @@ export interface SheetVM extends ProductCardVM {
   faq: SheetFaqVM[];
   /** Cross-sell products ("Proposez aussi"). */
   cross: ProductCardVM[];
+  /** Sales arguments drawn from what the book knows: best seller, season, shelf life, diet. */
+  args: string[];
+  /** The network's combos (BO): what to offer with it, and B's products in the book. */
+  combos: SheetComboVM[];
+  /** Cross-sell products not already shown under a combo. */
+  crossRest: ProductCardVM[];
+  /** The bundles it is part of in this shop ("Dans les menus & bundles"). */
+  bundles: ProductBundleVM[];
 }
+
+/** A network combo on the product sheet. */
+export interface SheetComboVM {
+  /** What to offer ("Boissons chaudes"). */
+  with: string;
+  /** When, nickname and target: "Matin (avant 11 h) · « le déjeuner complet » · objectif réseau : 25 % des tickets". */
+  meta: string;
+  items: ProductCardVM[];
+}
+
+/** Where and when the sheet is shown: the bundles depend on the day and the shop. */
+export interface SheetContext {
+  today: Date;
+  shop: string | null;
+}
+
+const sheetContext = (): SheetContext => ({ today: now(), shop: BOOK_SOURCE.shop?.id ?? config.shop });
 
 /** "Toute l'année" / "Het hele jaar", or "Season name · dates" for a seasonal product. */
 export const availability = (p: Product, lang: Lang, seasons: Lookup<Season> = SEASONS): string => {
@@ -89,11 +117,43 @@ export const backName = (stack: readonly string[], lang: Lang, products: Lookup<
   return tr(id ? products[id]?.name : null, lang);
 };
 
+/** Sales arguments from the facts of the book, in this order: best seller, season, shelf life, diet. */
+export function salesArgs(x: Product, lang: Lang, seasons: Lookup<Season> = SEASONS): string[] {
+  const S = saleLabels(lang);
+  const season = x.season ? seasons[x.season] : undefined;
+  return [
+    x.best ? S.best : '',
+    season ? S.season(tr(season.n, lang), tr(season.dates, lang)) : '',
+    x.dlc === 1 ? S.dlc1 : x.dlc >= 2 ? S.dlcN(x.dlc) : '',
+    x.diet === 'vegan' ? S.vegan : x.diet === 'vege' ? S.vege : '',
+  ].filter(Boolean);
+}
+
+/** A combo for the sheet: its products (unknown ids skipped), when, nickname and target in one line. */
+export function comboVM(c: ProductCombo, lang: Lang, lk: Catalog): SheetComboVM {
+  const S = saleLabels(lang);
+  const nick = tr(c.name, lang);
+  const target = c.target === null ? '' : S.target(c.target.toLocaleString(locale(lang), { maximumFractionDigits: 1 }));
+  return {
+    with: tr(c.with, lang),
+    meta: [tr(c.when, lang), nick ? `« ${nick} »` : '', target].filter(Boolean).join(' · '),
+    items: cardsByIds(c.items, lang, lk),
+  };
+}
+
 /** Builds the sheet of product `id`, or null when nothing (or an unknown id) is selected. */
-export const sheetVM = (id: string | null, selFaq: number, lang: Lang, book: BookData = BOOK): SheetVM | null => {
+export const sheetVM = (
+  id: string | null,
+  selFaq: number,
+  lang: Lang,
+  book: BookData = BOOK,
+  ctx: SheetContext = sheetContext(),
+): SheetVM | null => {
   const lk = catalogOf(book);
   const x = id ? lk.products[id] : undefined;
   if (!x) return null;
+  const combos = x.combos ?? [];
+  const inCombo = new Set(combos.flatMap(c => c.items));
   return {
     ...toCard(x, lang, lk),
     cat: tr(lk.categories[x.cat]?.n, lang),
@@ -111,6 +171,10 @@ export const sheetVM = (id: string | null, selFaq: number, lang: Lang, book: Boo
     faq: productFaq(x.id, selFaq, lang, book.faq),
     // A repeated id gives a repeated pill, as in the prototype.
     cross: cardsByIds(x.cross, lang, lk),
+    args: salesArgs(x, lang, lk.seasons),
+    combos: combos.map(c => comboVM(c, lang, lk)),
+    crossRest: cardsByIds(x.cross.filter(c => !inCombo.has(c)), lang, lk),
+    bundles: bundlesForProduct({ name: x.name[0], cat: lk.categories[x.cat]?.n[0] ?? '', price: x.price }, ctx.today, ctx.shop, lang),
   };
 };
 

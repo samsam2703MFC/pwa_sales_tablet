@@ -484,3 +484,141 @@
   font-size: 16px;
   line-height: 1.7;
 }
+
+/* --- Sales arguments, combos, bundles (shop request) ------------------------- */
+.args {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.argList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.argList li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.argList li::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 0.55em;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+.combo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  background: var(--color-background-secondary);
+}
+
+.comboHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.comboWith {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-primary);
+}
+
+.comboMeta {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.bundles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bundleList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* The time of day tints the left edge, as on the home page. */
+.bundle {
+  --edge: #A8A29A;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px 12px 18px;
+  border-radius: var(--radius-lg);
+  border: 0.5px solid var(--color-border-tertiary);
+  box-shadow: inset 4px 0 0 var(--edge);
+}
+.matin { --edge: #E8A44A; }
+.midi { --edge: var(--color-primary); }
+.apresMidi { --edge: #7FA56A; }
+.weekend { --edge: #6E7BB4; }
+.jour { --edge: #A8A29A; }
+
+.bundleTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bundleName {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.bundlePrice {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.bundleContent {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.bundleWhen {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.bundleMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.bundleToday,
+.bundleStart,
+.bundleChannel {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+.bundleToday { background: var(--color-primary); color: #fff; }
+.bundleStart { background: var(--color-secondary); color: var(--color-on-abricot); }
+.bundleChannel { border: 0.5px solid var(--color-border-secondary); }

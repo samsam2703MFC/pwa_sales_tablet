@@ -51,6 +51,7 @@ export function validateBook(b: BookData): string[] {
     known(`${p.id}.al`, allergens, p.al);
     known(`${p.id}.tr`, allergens, p.tr);
     known(`${p.id}.cross`, products, p.cross);
+    p.combos?.forEach((c, i) => known(`${p.id}.combos[${i}].items`, products, c.items));
     for (const a of p.al) if (p.tr.includes(a)) errors.push(`${p.id} : « ${a} » est à la fois dans al et dans tr`);
   }
   for (const x of b.faqSubs) known(`faqSubs.${x.id}.cat`, faqCats, [x.cat]);

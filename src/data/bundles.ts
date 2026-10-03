@@ -32,6 +32,13 @@ export interface Bundle {
   shops?: readonly string[];
   /** Another content in some shops (shop id → content). */
   shopContent?: Readonly<Record<string, T2>>;
+  /**
+   * The products it is made of, for the product sheet ("Dans les menus & bundles"): a product is
+   * in it when the French name of its category contains one of `cats`, or its French name one of
+   * `names` (compared lower-case, without accents, spaces nor punctuation), and its price is at
+   * least `minPrice`. Absent: no product (an offer on the whole webshop, a formula not detailed).
+   */
+  match?: { cats?: readonly string[]; names?: readonly string[]; minPrice?: number };
 }
 
 export interface BundlePlan {
@@ -55,11 +62,11 @@ export const BUNDLES: BundlePlan = {
     },
     {
       id: 'petitdej', name: ['Le petit-déj', 'Het ontbijt'], content: ['1 viennoiserie + 1 café', '1 koffiekoek + 1 koffie'],
-      price: 3.5, channel: 'shop', section: 'matin', days: weekdays(['avant 11 h', 'voor 11 u']),
+      price: 3.5, channel: 'shop', section: 'matin', days: weekdays(['avant 11 h', 'voor 11 u']), match: { cats: ['viennoiser'] },
     },
     {
       id: 'lunch', name: ['Le lunch', 'De lunch'], content: ['Flip & Flap + boisson + éclair', 'Flip & Flap + drankje + éclair'],
-      price: 8.5, channel: 'shop', section: 'midi', days: weekdays(['11 → 14 h', '11 → 14 u']),
+      price: 8.5, channel: 'shop', section: 'midi', days: weekdays(['11 → 14 h', '11 → 14 u']), match: { names: ['flipflap', 'eclair'] },
     },
     {
       id: 'bureau', name: ['Formule bureau', 'Kantoorformule'], content: ['Livrée au bureau', 'Geleverd op kantoor'],
@@ -67,21 +74,22 @@ export const BUNDLES: BundlePlan = {
     },
     {
       id: 'gouter', name: ['Le goûter', 'Het vieruurtje'], content: ['1 éclair + 1 café', '1 éclair + 1 koffie'],
-      price: 4.5, channel: 'shop', section: 'apresMidi',
+      price: 4.5, channel: 'shop', section: 'apresMidi', match: { names: ['eclair'] },
       days: { ...weekdays(['14 → 17 h', '14 → 17 u']), 6: ['14 → 17 h', '14 → 17 u'], 7: ['14 → 17 h', '14 → 17 u'] },
     },
     {
       id: 'quichetarte', name: ['Quiche + tarte', 'Quiche + taart'], content: ['1 quiche + ¼ de tarte', '1 quiche + ¼ taart'],
       price: 19.9, channel: 'shop', section: 'weekend', days: { 5: ALL_DAY, 6: ALL_DAY, 7: ALL_DAY },
-      shops: ['3', '4', '5'], shopContent: { 4: ['½ quiche + ½ tarte', '½ quiche + ½ taart'] },
+      shops: ['3', '4', '5'], shopContent: { 4: ['½ quiche + ½ tarte', '½ quiche + ½ taart'] }, match: { cats: ['quiche', 'tarte'] },
     },
     {
       id: 'croissants', name: ['4 + 2 croissants', '4 + 2 croissants'], content: ['4 viennoiseries + 2 croissants offerts', '4 koffiekoeken + 2 croissants gratis'],
       price: 6.9, channel: 'cc', section: 'weekend', days: { 6: ['retrait le matin', "'s ochtends afhalen"], 7: ['retrait le matin', "'s ochtends afhalen"] },
+      match: { cats: ['viennoiser'] },
     },
     {
       id: 'grands', name: ['Grands formats', 'Grote formaten'], content: ['Tartes 28 cm et plus de 20 €', 'Taarten 28 cm en meer dan 20 €'],
-      price: 19.9, channel: 'cc', section: 'weekend', days: { 6: ALL_DAY, 7: ALL_DAY },
+      price: 19.9, channel: 'cc', section: 'weekend', days: { 6: ALL_DAY, 7: ALL_DAY }, match: { cats: ['tarte'], minPrice: 20 },
     },
   ],
 };

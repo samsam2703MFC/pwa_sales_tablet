@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Lang } from '../data/types';
 import { PRODUCTS } from '../lib/catalog';
 import { AppProvider, useApp, type AppState } from '../state/store';
@@ -32,11 +32,21 @@ const renderDrawer = (lang: Lang = 0, initial: Partial<AppState> = {}, width = 1
 };
 
 const dialog = () => screen.getByRole('dialog');
+/** The 14 allergen tiles (the sheet has other lists: arguments, bundles). */
+const tilesOf = (d: HTMLElement) => within(d).getAllByRole('listitem').filter(li => li.parentElement!.className.includes('alGrid'));
 const btn = (name: string | RegExp) => within(dialog()).getByRole('button', { name });
 /** The sticky header (first child of the dialog), where the swipe is detected. */
 const header = () => dialog().firstElementChild as HTMLElement;
 
-afterEach(cleanup);
+// The bundles of the sheet follow the clock: pin it inside their period (Friday 16 October 2026).
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 9, 16, 12));
+});
+afterEach(() => {
+  vi.useRealTimers();
+  cleanup();
+});
 
 describe('ProductDrawer', () => {
   it('renders nothing without a selected product', () => {
@@ -55,12 +65,14 @@ describe('ProductDrawer', () => {
     for (const t of ['Viennoiseries', '1,30 €', 'pièce', "Toute l'année", 'Végétarien', 'Top vente', 'Jour même', 'Fermer']) {
       expect(within(d).getByText(t)).toBeTruthy();
     }
-    expect(within(d).getAllByRole('heading', { level: 3 }).map(h => h.textContent))
-      .toEqual(['À dire au client', 'Allergènes', 'Ingrédients', 'Durée', 'Conservation', 'Proposez aussi']);
+    // Shop request: arguments, what to offer with it and its bundles come before the allergens.
+    expect(within(d).getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual([
+      'À dire au client', 'Arguments de vente', 'Proposez aussi', 'Dans les menus & bundles', 'Allergènes', 'Ingrédients', 'Durée', 'Conservation',
+    ]);
     expect(within(d).getByText('« Il sort du four ce matin, il est encore tout croustillant. »')).toBeTruthy();
     expect(within(d).getByText('« Avec un café, vous avez le petit-déjeuner complet. »')).toBeTruthy();
     // 14 allergen tiles, the state is also given in words
-    const tiles = within(d).getAllByRole('listitem');
+    const tiles = tilesOf(d);
     expect(tiles).toHaveLength(14);
     expect(tiles[0].textContent).toBe('Gluten: Contient');
     expect(tiles[1].textContent).toBe('Crustacés');
@@ -71,13 +83,33 @@ describe('ProductDrawer', () => {
     expect(within(d).getAllByRole('button').map(b => b.textContent)).toEqual(['Fermer', 'Café & latte2,80 €', "Jus d'orange pressé3,90 €"]);
   });
 
+  it('arguments, what to offer with it and its bundles (Friday 16 October: the breakfast runs today)', () => {
+    renderDrawer(0, { sel: 'croissant' });
+    const d = dialog();
+    const section = (title: string) => within(d).getByText(title).parentElement!;
+    expect(within(section('Arguments de vente')).getAllByRole('listitem').map(li => li.textContent)).toEqual([
+      'Une de nos meilleures ventes au comptoir.', "Fait du jour : à savourer aujourd'hui, bien frais.", 'Végétarien.',
+    ]);
+    // the sample's cross-sell, as before
+    expect(within(section('Proposez aussi')).getAllByRole('button').map(b => b.textContent)).toEqual(['Café & latte2,80 €', "Jus d'orange pressé3,90 €"]);
+    const bundles = within(section('Dans les menus & bundles')).getAllByRole('listitem');
+    expect(bundles.map(b => b.firstElementChild!.textContent)).toEqual(['Le petit-déj3,50 €', '4 + 2 croissants6,90 €']);
+    const text = (el: Element) => el.textContent!.replace(/\u00a0/g, ' ');
+    expect(text(within(bundles[0]).getByText(/^Lun → ven/))).toBe('Lun → ven · avant 11 h');
+    expect(text(within(bundles[0]).getByText(/^Aujourd'hui/))).toBe("Aujourd'hui · avant 11 h");
+    expect(within(bundles[1]).queryByText(/^Aujourd'hui/)).toBeNull();
+    expect(within(bundles[1]).getByText('Click & collect')).toBeTruthy();
+  });
+
   it('is translated (NL)', () => {
     renderDrawer(1, { sel: 'croissant' });
     const d = screen.getByRole('dialog', { name: 'Croissant met roomboter' });
     for (const t of ['Viennoiserie', 'stuk', 'Het hele jaar', 'Vegetarisch', 'Topper', 'Dezelfde dag', 'Sluiten', 'Tegen de klant', 'Allergenen', 'Stel ook voor']) {
       expect(within(d).getByText(t)).toBeTruthy();
     }
-    expect(within(d).getAllByRole('listitem')[0].textContent).toBe('Gluten: Bevat');
+    expect(tilesOf(d)[0].textContent).toBe('Gluten: Bevat');
+    expect(within(d).getByText('Verkoopargumenten')).toBeTruthy();
+    expect(within(d).getByText("In menu's & bundels")).toBeTruthy();
   });
 
   it('"Fermer", the scrim and Escape close the sheet and clear the stack', () => {

@@ -31,6 +31,13 @@ export const REMOTE_PAYLOAD = {
         name: ['Couque suisse aux raisins', ''], desc: ['', ''], pitch: ['', ''], ingr: ['', ''],
         al: [], tr: [], alKnown: false, trKnown: false, alRaw: '',
         diet: null, keep: ['', ''], dlc: 1, cross: ['1610006'], crossLine: ['', ''],
+        // The network's combos (screen Croisements): B off the counter (drinks), B in the book (an unknown id
+        // dropped), and a malformed one (no "avec": dropped, the product kept).
+        combos: [
+          { avec: ['Boissons chaudes', ''], quand: ['Matin (avant 11 h)', 'Ochtend (voor 11 u)'], nom: ['le petit-déj complet', ''], cible: 7.5, ids: [] },
+          { avec: ['Croissants', ''], quand: ['', ''], nom: ['', ''], cible: null, ids: ['1610006', 'ghost'] },
+          { quand: ['', ''], ids: [] },
+        ],
       },
       {
         id: '2200310', cat: 'g-pain', img: '', price: 3.4, unit: ['', ''], best: false,
