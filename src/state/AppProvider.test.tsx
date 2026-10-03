@@ -33,16 +33,30 @@ const renderApp = (width: number, initial: Partial<AppState> = {}) => {
 
 afterEach(cleanup);
 
+/** Visible items of the search row: the field, plus the date in landscape. */
+const headerItems = () => [...document.querySelector('header')!.children].filter(c => !c.classList.contains('sr-only'));
+
 describe('AppProvider — layout', () => {
   it('switches between landscape (≥ 1000 px) and portrait when the width crosses 1000 px', () => {
     renderApp(1280);
     expect(api.compact).toBe(false);
-    expect(screen.queryByRole('button', { name: 'Plus' })).toBeNull();
+    expect(headerItems()).toHaveLength(2); // search field + date
     resize(999);
     expect(api.compact).toBe(true);
-    expect(screen.getByRole('button', { name: 'Plus' })).toBeTruthy();
+    expect(headerItems()).toHaveLength(1); // no room for the date
     resize(1000);
     expect(api.compact).toBe(false);
+    expect(headerItems()).toHaveLength(2);
+  });
+
+  it('keeps the same navigation on both sides of 1000 px: tab bar and "Plus", no sidebar', () => {
+    renderApp(1280);
+    for (const w of [1280, 999, 1000]) {
+      resize(w);
+      expect(screen.queryByRole('complementary')).toBeNull();
+      expect(screen.getAllByRole('navigation')).toHaveLength(1);
+      expect(screen.getByRole('button', { name: 'Plus' })).toBeTruthy();
+    }
   });
 
   it('reads the layout width through a media query, not innerWidth on every render (iOS pinch-zoom)', () => {
@@ -64,13 +78,15 @@ describe('AppProvider — layout', () => {
 });
 
 describe('AppProvider — "Plus" sheet across a rotation', () => {
-  it('a product opened in landscape is not covered by a "Plus" sheet left open in portrait', () => {
+  it('the sheet stays open on rotation; a product opened then is the only dialog, in both orientations', () => {
     renderApp(820, { more: true });
     expect(screen.getByRole('dialog', { name: 'Plus' })).toBeTruthy();
 
-    resize(1180); // rotate to landscape: the sheet is hidden…
-    expect(screen.queryByRole('dialog')).toBeNull();
-    act(() => api.actions.openProduct('croissant')); // …a product is opened…
+    resize(1180); // rotate to landscape: the sheet is the navigation there too, it stays…
+    expect(screen.getByRole('dialog', { name: 'Plus' })).toBeTruthy();
+    act(() => api.actions.openProduct('croissant')); // …a product is opened (closes the sheet)…
+    expect(api.state.more).toBe(false);
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
     resize(820); // …and the tablet goes back to portrait.
 
     const dialogs = screen.getAllByRole('dialog');

@@ -233,6 +233,10 @@
   object-fit: contain;
   mix-blend-mode: multiply;
 }
+/* A BO photo, rounded. */
+.topImgPhoto {
+  border-radius: 8px;
+}
 
 .topName {
   flex: 1;

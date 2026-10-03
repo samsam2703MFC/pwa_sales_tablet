@@ -5,12 +5,23 @@ import { fileURLToPath } from 'node:url';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-/** Main navigation: sidebar (landscape) or bottom tab bar (portrait). */
+/** Main navigation: the bottom tab bar, in both orientations (the app has no sidebar). */
 export const mainNav = (page: Page) => page.getByRole('navigation');
 
-/** Opens a section from the main navigation (sidebar button or tab). */
+/**
+ * Opens a section: its tab (Accueil, La gamme, Allergènes, FAQ), else its tile in the
+ * "Plus" / "Meer" sheet (Saisons, Vendre plus, Services, Conservation, Statistiques, Objectifs,
+ * Remarques clients, Les bases, Onboarding). Works the same in landscape and portrait.
+ */
 export async function openSection(page: Page, label: string): Promise<void> {
-  await mainNav(page).getByRole('button', { name: label, exact: true }).click();
+  const nav = mainNav(page);
+  await nav.waitFor();
+  const tab = nav.getByRole('button', { name: label, exact: true });
+  if (await tab.count()) return tab.click();
+  await nav.getByRole('button', { name: /^(Plus|Meer)$/ }).click();
+  const sheet = page.getByRole('dialog');
+  await sheet.getByRole('button', { name: label, exact: true }).click();
+  await sheet.waitFor({ state: 'detached' });
 }
 
 /** Page title (h1) of the current section. */

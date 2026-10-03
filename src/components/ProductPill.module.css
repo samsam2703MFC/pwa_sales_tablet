@@ -21,6 +21,11 @@
   mix-blend-mode: multiply;
 }
 
+/* A BO photo, cropped to a rounded square. */
+.round {
+  border-radius: 10px;
+}
+
 .name {
   color: var(--color-text);
   font-weight: 500;

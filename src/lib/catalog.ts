@@ -1,7 +1,7 @@
 import { BOOK } from '../data/book';
 import type { Allergen, BookData, Category, Lang, Product, Season, T2 } from '../data/types';
 import { fmtPrice } from './format';
-import { asset } from './asset';
+import { asset, isPhoto } from './asset';
 
 /** Records by id. Partial: an id typed by hand in the data may point to nothing. */
 export type Lookup<X> = Readonly<Partial<Record<string, X>>>;
@@ -47,11 +47,15 @@ export interface ProductCardVM {
   name: string;
   /** Resolved image URL (placeholder when the product has no picture). */
   img: string;
+  /** `img` is a BO photo (fills a square frame), not an illustration (see isPhoto). */
+  photo: boolean;
   /** Formatted price, '' if hidden/unknown. */
   price: string;
   unit: string;
   /** Allergen 3-letter codes. */
   als: string[];
+  /** The ids of those allergens, same order (pictograms). */
+  alIds: string[];
   /** The allergen list is unverified: `als` may be incomplete ("à vérifier"). */
   alUnknown: boolean;
   best: boolean;
@@ -66,9 +70,11 @@ export const toCard = (x: Product, lang: Lang, lk: Pick<Catalog, 'allergens' | '
   id: x.id,
   name: tr(x.name, lang),
   img: asset(x.img),
+  photo: isPhoto(x.img),
   price: fmtPrice(x.price),
   unit: tr(x.unit, lang),
   als: x.al.flatMap(a => lk.allergens[a]?.s ?? []),
+  alIds: x.al.filter(a => lk.allergens[a]),
   alUnknown: allergensUnknown(x),
   best: !!x.best,
   seasonal: !!x.season,

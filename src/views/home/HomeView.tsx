@@ -1,110 +1,68 @@
 import { useMemo } from 'react';
-import { PillRow, ProductPill } from '../../components/ProductPill';
-import { SectionTitle } from '../../components/PageTitle';
-import { asset } from '../../lib/asset';
+import { ProductTile, ProductTiles } from '../../components/ProductTile';
 import { currentMonth } from '../../lib/date';
-import { onbLabels } from '../../lib/i18n';
 import { useApp } from '../../state/store';
 import type { SeasonVM } from '../../lib/seasons';
-import { homeModel, ONB_MODULES } from './home.logic';
+import { BundlesWeek } from './Bundles';
+import { homeModel } from './home.logic';
 import s from './HomeView.module.css';
 
 /**
- * Accueil: greeting, "Le client demande…" shortcuts (each opens a pre-filtered section),
- * onboarding banner, season(s) of the moment, next season to prepare, best sellers.
- * Blocks with nothing to show (no season, no best seller, empty instruction) are left out.
+ * Accueil: the current range (season(s) of the moment, with their products) and the network's
+ * bundles of the week. The shop's targets and the customer remark form have their own pages
+ * (« Objectifs », « Remarques clients », in the "Plus" sheet).
  */
 export function HomeView() {
-  const { L, lang, actions } = useApp();
+  const { L, lang } = useApp();
   const month = currentMonth();
   const m = useMemo(() => homeModel(lang, month), [lang, month]);
 
   return (
     <section className={s.page}>
-      <div className={s.intro}>
-        <h1 className={s.h1}>{L.hello}</h1>
-        <p className={s.lead}>{L.homeIntro}</p>
-      </div>
+      <h1 className={s.h1}>{L.hello}</h1>
 
-      <div className={s.asks}>
-        <span id="home-asks" className={s.eyebrow}>{L.asks}</span>
-        <div className={s.askGrid} role="group" aria-labelledby="home-asks">
-          {m.quick.map(a => (
-            <button key={a.id} type="button" className={s.ask} onClick={() => actions.go(a.view, a.extra)}>
-              <span className={s.askLabel}>{a.label}</span>
-              <span className={s.askSub}>{a.sub} <span aria-hidden="true">→</span></span>
-            </button>
-          ))}
-        </div>
-      </div>
+      <section className={s.range} aria-labelledby="home-range">
+        <h2 id="home-range" className={s.eyebrow}>{L.curRange}</h2>
+        {m.now.length > 0
+          ? m.now.map(x => <SeasonNow key={x.id} season={x} />)
+          : <p className={s.empty}>{L.noSeasonNow}</p>}
+      </section>
 
-      <button type="button" className={s.onb} onClick={() => actions.go('onb')}>
-        {/* spans, not divs: a <button> only allows phrasing content (display set in CSS) */}
-        <span className={s.onbThumb}>
-          <img src={asset('img/onb/croissant.png')} alt="" />
-        </span>
-        <span className={s.onbText}>
-          <span className={s.onbEyebrow}>Onboarding</span>
-          <span className={s.onbTitle}>{onbLabels(lang).homeT(ONB_MODULES)}</span>
-        </span>
-        <span className={s.onbArrow} aria-hidden="true">→</span>
-      </button>
-
-      {m.now.map(x => <SeasonNow key={x.id} season={x} />)}
-
-      {m.next && (
-        <div className={s.next}>
-          <img src={m.next.img} alt="" className={s.nextImg} />
-          <div className={s.nextText}>
-            <span className={s.nextEyebrow}>{L.next} · {m.next.name}{m.next.dates && <> · {m.next.dates}</>}</span>
-            {m.next.tip && <span className={s.nextTip}>{m.next.tip}</span>}
-          </div>
-        </div>
-      )}
-
-      {m.best.length > 0 && (
-        <div className={s.best}>
-          <SectionTitle>{L.best}</SectionTitle>
-          <div className={s.bestGrid}>
-            {m.best.map(p => (
-              <button key={p.id} type="button" className={s.bestTile} onClick={() => actions.openProduct(p.id)}>
-                <img src={p.img} alt="" loading="lazy" decoding="async" className={s.bestImg} />
-                <span className={s.bestName}>{p.name}</span>
-                <span className={s.bestPrice}>{p.price}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      <BundlesWeek />
     </section>
   );
 }
 
-/** "En ce moment" card: illustration, dates, name, instruction and the season's products. */
+/**
+ * "En ce moment" card: a compact head (illustration, dates, name, instruction), then the
+ * season's products as rounded tiles, two per row.
+ */
 function SeasonNow({ season: x }: { season: SeasonVM }) {
   const { L } = useApp();
   const titleId = `home-season-${x.id}`;
   return (
     <article className={s.season} aria-labelledby={titleId}>
-      <img src={x.img} alt="" className={s.seasonImg} />
-      <div className={s.seasonBody}>
-        <div className={s.seasonMeta}>
-          <span className={s.badge}>{L.now}</span>
-          <span className={s.dates}>{x.dates}</span>
-        </div>
-        <h2 id={titleId} className={s.h2}>{x.name}</h2>
-        {x.tip && (
-          <div className={s.tip}>
-            <span className={s.tipLabel}>{L.tipL}</span>
-            <span>{x.tip}</span>
+      <div className={s.seasonHead}>
+        <img src={x.img} alt="" className={s.seasonImg} />
+        <div className={s.seasonBody}>
+          <div className={s.seasonMeta}>
+            <span className={s.badge}>{L.now}</span>
+            <span className={s.dates}>{x.dates}</span>
           </div>
-        )}
-        {x.products.length > 0 && (
-          <PillRow>
-            {x.products.map(p => <ProductPill key={p.id} p={p} size="lg" />)}
-          </PillRow>
-        )}
+          <h3 id={titleId} className={s.h2}>{x.name}</h3>
+          {x.tip && (
+            <div className={s.tip}>
+              <span className={s.tipLabel}>{L.tipL}</span>
+              <span>{x.tip}</span>
+            </div>
+          )}
+        </div>
       </div>
+      {x.products.length > 0 && (
+        <ProductTiles label={x.name}>
+          {x.products.map(p => <ProductTile key={p.id} p={p} />)}
+        </ProductTiles>
+      )}
     </article>
   );
 }

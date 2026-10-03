@@ -173,6 +173,21 @@ img {
   pointer-events: none;
 }
 
+/*
+ * A BO product photo (ProductCardVM.photo): fills its frame, cropped to it, without the
+ * illustrations' multiply blend. A photo that failed to load is the placeholder illustration
+ * again (data-fallback, src/lib/asset.ts): drawn in the middle, a third of the frame.
+ */
+img.photo {
+  object-fit: cover;
+  mix-blend-mode: normal;
+}
+img.photo[data-fallback] {
+  object-fit: contain;
+  padding: 30%;
+  mix-blend-mode: multiply;
+}
+
 :focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;

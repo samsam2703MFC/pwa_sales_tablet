@@ -7,7 +7,7 @@ const P = (id: string) => LK.products[id]!;
 describe('toCard', () => {
   it('builds the card in each language, allergen codes in the product order', () => {
     expect(toCard(P('p2'), 0, LK)).toEqual({
-      id: 'p2', name: 'p2-fr', img: '/img/p/p2.png', price: '4,00 €', unit: 'pièce', als: ['AAA', 'BBB'], alUnknown: false,
+      id: 'p2', name: 'p2-fr', img: '/img/p/p2.png', photo: false, price: '4,00 €', unit: 'pièce', als: ['AAA', 'BBB'], alIds: ['a1', 'a2'], alUnknown: false,
       best: false, seasonal: true, seasonName: 'Printemps', vegan: false, vege: true,
     });
     expect(toCard(P('p2'), 1, LK)).toMatchObject({ name: 'p2-nl', unit: 'stuk', seasonName: 'Lente' });
@@ -20,7 +20,7 @@ describe('toCard', () => {
 
   it('skips an unknown allergen or season id instead of crashing (hand-entered data)', () => {
     const x = product('x', { al: ['a1', 'ghost', 'a3'], season: 'ghost' });
-    expect(toCard(x, 0, LK)).toMatchObject({ als: ['AAA', 'CCC'], seasonal: true, seasonName: '' });
+    expect(toCard(x, 0, LK)).toMatchObject({ als: ['AAA', 'CCC'], alIds: ['a1', 'a3'], seasonal: true, seasonName: '' });
   });
 });
 
@@ -60,8 +60,10 @@ describe('tr', () => {
 describe('BO products in cards', () => {
   it('no picture → placeholder; unverified allergens flagged', () => {
     const x = product('x', { img: '', alKnown: false });
-    expect(toCard(x, 0, LK)).toMatchObject({ img: '/img/placeholder.svg', als: [], alUnknown: true });
-    expect(toCard(product('y', { img: 'http://bo.test/uploads/tablette/y-640.jpg' }), 0, LK).img).toBe('http://bo.test/uploads/tablette/y-640.jpg');
+    expect(toCard(x, 0, LK)).toMatchObject({ img: '/img/placeholder.svg', photo: false, als: [], alUnknown: true });
+    expect(toCard(product('y', { img: 'http://bo.test/uploads/tablette/y-640.jpg' }), 0, LK)).toMatchObject({
+      img: 'http://bo.test/uploads/tablette/y-640.jpg', photo: true,
+    });
   });
 
   it('allergensUnknown: only an explicit false (absent = the sample, verified)', () => {

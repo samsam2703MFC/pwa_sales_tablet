@@ -65,10 +65,19 @@ export interface Season {
 
 export interface FaqItem {
   cat: string;
+  /** Sub-category (id of a `faqSubs` entry of the same `cat`); absent = only under "Tout". */
+  sub?: string;
   /** Linked product ids. */
   p?: string[];
   q: T2;
   a: T2;
+}
+
+/** A FAQ sub-category: belongs to the FAQ category `cat`. */
+export interface FaqSub {
+  id: string;
+  cat: string;
+  n: T2;
 }
 
 export interface Service {
@@ -119,6 +128,8 @@ export interface BookData {
   seasons: Season[];
   faq: FaqItem[];
   faqCats: Category[];
+  /** Second row of chips under a FAQ category (e.g. the product families under "Produits"), in display order. */
+  faqSubs: FaqSub[];
   services: Service[];
   combos: Combo[];
   reflexes: T2[];

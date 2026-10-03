@@ -43,17 +43,25 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
+/** Buttons of the bottom tab bar (the only navigation, in both orientations). */
+const tabs = () => within(screen.getByRole('navigation')).getAllByRole('button');
+
 describe('AppShell — landscape (≥ 1000 px)', () => {
-  it('renders the sidebar with both groups, the page and the date, without tab bar', () => {
+  it('renders the top bar, the 5 tabs, the page and the date, without sidebar', () => {
     renderShell(1280);
-    const nav = screen.getByRole('navigation', { name: 'Navigation' });
-    expect(within(nav).getAllByRole('button')).toHaveLength(10);
-    expect(within(nav).getByText('Vente')).toBeTruthy();
-    expect(within(nav).getByText('Formation')).toBeTruthy();
+    // Shop request: no left sidebar any more, the tab bar is the navigation in landscape too.
+    expect(screen.queryByRole('complementary')).toBeNull();
+    expect(screen.getAllByRole('navigation')).toHaveLength(1);
+    expect(screen.getByRole('navigation', { name: 'Navigation' })).toBeTruthy();
+    expect(tabs().map(b => b.textContent)).toEqual(['Accueil', 'La gamme', 'Allergènes', 'FAQ', 'Plus']);
     expect(btn('Accueil').getAttribute('aria-current')).toBe('page');
     expect(screen.getByText('page')).toBeTruthy();
-    expect(screen.getByText("Données d'exemple — à remplacer par les fiches produit officielles.")).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Plus' })).toBeNull();
+    // Top bar: logo, "Book vendeuses", data-source pill, FR/NL toggle.
+    expect(screen.getByRole('img', { name: "L'Atelier By" })).toBeTruthy();
+    expect(screen.getByText('Book vendeuses')).toBeTruthy();
+    expect(screen.getByText("Données d'exemple")).toBeTruthy();
+    expect(screen.queryByText(/à remplacer par les fiches produit officielles/)).toBeNull();
+    expect(screen.getByRole('group', { name: 'Langue' })).toBeTruthy();
     expect(headerItems()).toHaveLength(2); // search field + date
   });
 
@@ -65,11 +73,16 @@ describe('AppShell — landscape (≥ 1000 px)', () => {
     expect(btn('Accueil').getAttribute('aria-current')).toBeNull();
   });
 
-  it('has no active item while searching, and a nav click resets the search', () => {
-    renderShell(1280);
+  it('while searching, the tab bar keeps the section highlighted (prototype tab()); a tab click resets the search', () => {
+    renderShell(1280, 0, { view: 'gamme' });
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'beurre' } });
     expect(state().q).toBe('beurre');
-    expect(screen.queryAllByRole('button', { current: 'page' })).toHaveLength(0);
+    // The tab bar does not look at the search text (unlike the former sidebar).
+    expect(screen.getAllByRole('button', { current: 'page' }).map(b => b.textContent)).toEqual(['La gamme']);
+    fireEvent.click(btn('Allergènes'));
+    expect(state()).toMatchObject({ view: 'al', q: '' });
+    // Even the tab of the current section leaves the results.
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'noix' } });
     fireEvent.click(btn('Allergènes'));
     expect(state()).toMatchObject({ view: 'al', q: '' });
   });
@@ -117,7 +130,7 @@ describe('AppShell — landscape (≥ 1000 px)', () => {
     expect(status.textContent).toBe('');
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'cro' } });
     expect(resultsStatus()).toBe(status);
-    expect(status.textContent).toBe('9 produits, 1 question');
+    expect(status.textContent).toBe('9 produits, 4 questions');
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'gluten' } });
     expect(status.textContent).toMatch(/^\d+ produits, \d+ questions?$/);
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'croz' } });
@@ -129,7 +142,7 @@ describe('AppShell — landscape (≥ 1000 px)', () => {
   it('announces the results in NL', () => {
     renderShell(1280, 1);
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'cro' } });
-    expect(resultsStatus().textContent).toBe('9 producten, 1 vraag');
+    expect(resultsStatus().textContent).toBe('9 producten, 4 vragen');
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'croz' } });
     expect(resultsStatus().textContent).toBe('Geen resultaten.');
   });
@@ -143,7 +156,7 @@ describe('AppShell — landscape (≥ 1000 px)', () => {
     const h1 = screen.getByRole('heading', { level: 1 });
     expect(document.activeElement).toBe(h1);
     expect(h1.tabIndex).toBe(-1);
-    // A sidebar item keeps its focus.
+    // A tab keeps its focus.
     const item = btn('La gamme');
     item.focus();
     fireEvent.click(item);
@@ -151,16 +164,19 @@ describe('AppShell — landscape (≥ 1000 px)', () => {
     expect(document.activeElement).toBe(item);
   });
 
-  it('makes the sidebar and the page inert while the product sheet is open', () => {
+  it('makes the tab bar and the page inert while the product sheet (side panel) is open', () => {
     renderShell(1280, 0, { sel: BOOK.products[0].id });
-    const main = screen.getByRole('main');
-    const aside = document.querySelector('aside')!;
+    const main = screen.getByRole('main', { hidden: true });
+    const bar = document.querySelector('nav')!;
     expect(main.hasAttribute('inert')).toBe(true);
-    expect(aside.hasAttribute('inert')).toBe(true);
-    expect(screen.getByRole('dialog').closest('[inert]')).toBeNull();
-    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Fermer' }));
+    expect(bar.hasAttribute('inert')).toBe(true);
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.closest('[inert]')).toBeNull();
+    // Landscape: side panel, no handle in its header (bottom sheet in portrait).
+    expect(dialog.firstElementChild!.children).toHaveLength(1);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Fermer' }));
     expect(main.hasAttribute('inert')).toBe(false);
-    expect(aside.hasAttribute('inert')).toBe(false);
+    expect(bar.hasAttribute('inert')).toBe(false);
   });
 
   it('an unknown selected id opens nothing and leaves the page usable', () => {
@@ -176,16 +192,36 @@ describe('AppShell — landscape (≥ 1000 px)', () => {
     expect(state().lang).toBe(1);
     expect(btn('NL').getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByRole('navigation', { name: 'Navigatie' })).toBeTruthy();
-    expect(btn('Start')).toBeTruthy();
-    expect(screen.getByText('Verkoop')).toBeTruthy();
+    expect(tabs().map(b => b.textContent)).toEqual(['Start', 'Assortiment', 'Allergenen', 'FAQ', 'Meer']);
+    expect(screen.getByRole('group', { name: 'Taal' })).toBeTruthy();
+    expect(screen.getByText('Voorbeeldgegevens')).toBeTruthy();
     expect(screen.getByPlaceholderText('Zoek een product, ingrediënt, vraag…')).toBeTruthy();
     expect(document.documentElement.lang).toBe('nl');
+    // The "Plus" sheet follows the language.
+    fireEvent.click(btn('Meer'));
+    const dialog = screen.getByRole('dialog', { name: 'Meer' });
+    expect(within(dialog).getByText('Verkoop')).toBeTruthy();
+    expect(within(dialog).getByText('Opleiding')).toBeTruthy();
+    expect(within(dialog).getByRole('button', { name: 'De basis' })).toBeTruthy();
+  });
+
+  it('opens the "Plus" sheet too (Vente / Formation); "Les bases" opens its section', () => {
+    renderShell(1280);
+    fireEvent.click(btn('Plus'));
+    const dialog = screen.getByRole('dialog', { name: 'Plus' });
+    expect(document.activeElement).toBe(dialog);
+    expect(screen.getByRole('main').hasAttribute('inert')).toBe(true);
+    expect(within(dialog).getByText('Vente')).toBeTruthy();
+    expect(within(dialog).getByText('Formation')).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Les bases' }));
+    expect(state()).toMatchObject({ view: 'bases', more: false });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(tabs().filter(b => b.className.includes('on')).map(b => b.textContent)).toEqual(['Plus']);
+    expect(document.activeElement).toBe(btn('Plus'));
   });
 });
 
 describe('AppShell — portrait (< 1000 px)', () => {
-  const tabs = () => within(screen.getByRole('navigation')).getAllByRole('button');
-
   it('renders the compact top bar and the 5 tabs, no sidebar nor date', () => {
     renderShell(820);
     expect(screen.queryByRole('complementary')).toBeNull();
@@ -210,7 +246,7 @@ describe('AppShell — portrait (< 1000 px)', () => {
     expect(document.activeElement).toBe(dialog);
     expect(btn('Plus').getAttribute('aria-expanded')).toBe('true');
     expect(within(dialog).getAllByRole('button').map(b => b.textContent))
-      .toEqual(['Saisons', 'Vendre plus', 'Services', 'Conservation', 'Statistiques', 'Onboarding']);
+      .toEqual(['Saisons', 'Vendre plus', 'Services', 'Conservation', 'Statistiques', 'Objectifs', 'Remarques clients', 'Les bases', 'Onboarding']);
     fireEvent.click(within(dialog).getByRole('button', { name: 'Saisons' }));
     expect(state()).toMatchObject({ view: 'saisons', more: false });
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -257,12 +293,17 @@ describe('AppShell — portrait (< 1000 px)', () => {
     expect(document.activeElement).toBe(btn('Meer'));
   });
 
-  it('hides the sheet in landscape even if it was left open', () => {
+  it('the product sheet is a bottom sheet (handle in its header)', () => {
+    renderShell(820, 0, { sel: BOOK.products[0].id });
+    expect(screen.getByRole('dialog').firstElementChild!.children).toHaveLength(2); // handle row + button row
+  });
+
+  it('a sheet left open stays open in landscape: the same navigation in both orientations', () => {
     renderShell(820, 0, { more: true });
-    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: 'Plus' })).toBeTruthy();
     cleanup();
     renderShell(1280, 0, { more: true });
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(screen.getByRole('main').hasAttribute('inert')).toBe(false);
+    expect(screen.getByRole('dialog', { name: 'Plus' })).toBeTruthy();
+    expect(screen.getByRole('main', { hidden: true }).hasAttribute('inert')).toBe(true);
   });
 });

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Lang } from '../../data/types';
 import { AppProvider, useApp, type AppState } from '../../state/store';
@@ -10,79 +10,111 @@ function Probe() {
 }
 const state = (): AppState => JSON.parse(screen.getByTestId('state').textContent ?? '{}');
 
-/** Language switch, like the shell's FR/NL toggle. */
-function SwitchLang() {
-  const { actions } = useApp();
-  return <button type="button" data-testid="to-nl" onClick={() => actions.setLang(1)} />;
-}
-
 const renderHome = (lang: Lang = 0, initial: Partial<AppState> = {}) =>
   render(
     <AppProvider initial={{ lang, ...initial }}>
       <HomeView />
       <Probe />
-      <SwitchLang />
     </AppProvider>,
   );
 
-const tile = (label: string) => screen.getByText(label, { exact: true }).closest('button')!;
-
-/** jsdom has no scrolling: record the "back to top" of each section change instead. */
-const scrollTo = vi.fn();
 beforeEach(() => {
-  scrollTo.mockClear();
-  window.scrollTo = scrollTo as unknown as typeof window.scrollTo;
+  // "En ce moment" and the bundles follow the device clock: pin it to 2 October (autumn).
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 9, 2, 12));
 });
-afterEach(cleanup);
+afterEach(() => {
+  vi.useRealTimers();
+  cleanup();
+});
 
 describe('HomeView', () => {
-  it('renders the greeting and the 6 quick asks in FR', () => {
+  it('shows only the greeting, the current range and the bundles of the week (shop request)', () => {
     renderHome(0);
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Bonjour !');
-    expect(screen.getByRole('group', { name: 'Le client demande…' }).querySelectorAll('button')).toHaveLength(6);
+    expect(screen.getAllByRole('heading', { level: 2 }).map(h => h.textContent)).toEqual(['La gamme actuelle', 'Les bundles de la semaine']);
+    const range = screen.getByRole('region', { name: 'La gamme actuelle' });
+    const season = within(range).getByRole('article', { name: 'Automne' });
+    // the season's products: rounded tiles, two per row (name and price)
+    const tiles = within(within(season).getByRole('group', { name: 'Automne' })).getAllByRole('button');
+    expect(tiles.map(b => b.textContent)).toEqual(['Brioche croustillante4,20 €pièce']);
+    // range first, then the bundles
+    const bundles = screen.getByRole('region', { name: 'Les bundles de la semaine' });
+    expect(range.compareDocumentPosition(bundles) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // gone from the home page: quick asks, remark form, targets, onboarding banner, next season, best sellers
+    expect(screen.queryByRole('group', { name: 'Le client demande…' })).toBeNull();
+    expect(screen.queryByRole('form')).toBeNull();
+    expect(screen.queryByText('Objectifs')).toBeNull();
+    expect(screen.queryByText(/Formation vente en \d+ modules/)).toBeNull();
+    expect(screen.queryByText('À préparer')).toBeNull();
+    expect(screen.queryByText('Les plus vendus')).toBeNull();
+    expect(screen.getAllByText('En ce moment')).toHaveLength(1);
+  });
+
+  /** A bundle card by name, its texts with no-break spaces read as spaces. */
+  const bundle = (name: string) => screen.getByRole('article', { name });
+  const text = (el: Element) => el.textContent!.replace(/\u00a0/g, ' ');
+
+  it('bundles before the period (2 October): rounded cards, the weekly pattern, "Dès le jeudi 15 octobre"', () => {
+    renderHome(0);
+    expect(screen.getByText('Dès le jeudi 15 octobre')).toBeTruthy();
+    expect(screen.getByText('Du 15 octobre au 15 décembre')).toBeTruthy();
+    // sample data, no shop: every bundle, as a list of cards; the shop-only one says where
+    const cards = within(screen.getByRole('list')).getAllByRole('listitem');
+    expect(cards).toHaveLength(8);
+    expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent).slice(1)).toEqual([
+      'Offre site', 'Le petit-déj', 'Le lunch', 'Formule bureau', 'Le goûter', 'Quiche + tarte', '4 + 2 croissants', 'Grands formats',
+    ]);
+    const lunch = bundle('Le lunch');
+    expect(within(lunch).getByText('8,50 €')).toBeTruthy();
+    expect(within(lunch).getByText('Flip & Flap + boisson + éclair')).toBeTruthy();
+    expect(text(within(lunch).getByText(/^Lun → ven/))).toBe('Lun → ven · 11 → 14 h');
+    expect(text(within(bundle('Le goûter')).getByText(/^Tous les jours/))).toBe('Tous les jours · 14 → 17 h');
+    expect(within(bundle('Quiche + tarte')).getByText('Seulement à Gosselies, Halle, Sombreffe · Halle : ½ quiche + ½ tarte')).toBeTruthy();
+    expect(within(bundle('4 + 2 croissants')).getByText('Click & collect')).toBeTruthy();
+    // nothing runs "today" before the period
+    expect(screen.queryByText(/^Aujourd'hui/)).toBeNull();
+  });
+
+  it('bundles during the period (Friday 16 October): "Aujourd\'hui" on the bundles of the day', () => {
+    vi.setSystemTime(new Date(2026, 9, 16, 12));
+    renderHome(0);
+    expect(screen.queryByText(/^Dès le/)).toBeNull();
+    expect(text(within(bundle('Le petit-déj')).getByText(/^Aujourd'hui/))).toBe("Aujourd'hui · avant 11 h");
+    // Monday to Wednesday are before the period
+    expect(text(within(bundle('Le petit-déj')).getByText(/^Jeu, ven/))).toBe('Jeu, ven · avant 11 h');
+    expect(within(bundle('4 + 2 croissants')).queryByText(/^Aujourd'hui/)).toBeNull();
   });
 
   it('renders in NL', () => {
     renderHome(1);
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Goedendag!');
-    expect(screen.getByText('Verkoopopleiding in 7 modules · 1 min lezen per module')).toBeTruthy();
-    expect(screen.getByRole('heading', { level: 2, name: 'Topverkopers' })).toBeTruthy();
+    expect(screen.getAllByRole('heading', { level: 2 }).map(h => h.textContent)).toEqual(['Het huidige assortiment', 'De bundels van de week']);
+    expect(screen.getByRole('heading', { level: 3, name: 'Herfst' })).toBeTruthy();
+    expect(screen.getByText('Vanaf donderdag 15 oktober')).toBeTruthy();
+    expect(screen.queryByText(/Verkoopopleiding/)).toBeNull();
   });
 
-  const cases: [string, Partial<AppState>][] = [
-    ['Sans gluten ?', { view: 'al', ex: ['gluten'] }],
-    ['Sans lait ?', { view: 'al', ex: ['lait'] }],
-    ['Sans fruits à coque ?', { view: 'al', ex: ['noix', 'arach'] }],
-    ['Quelque chose de vegan ?', { view: 'gamme', vegan: true, cat: 'all' }],
-    ['Commander un gâteau', { view: 'svc' }],
-    ['Un lunch rapide', { view: 'ventes' }],
-  ];
-  for (const [label, expected] of cases) {
-    it(`"${label}" opens the pre-filtered section`, () => {
-      renderHome(0, { cat: 'pain', sel: 'pistolet', stack: ['baguette'], more: true, onbMod: 2 });
-      fireEvent.click(tile(label));
-      expect(state()).toMatchObject({ ...expected, q: '', sel: null, stack: [], more: false, onbMod: -1 });
-      if (!('cat' in expected)) expect(state().cat).toBe('pain');
-      expect(scrollTo).toHaveBeenCalledWith(0, 0);
-    });
-  }
-
-  it('updates the quick asks in place on a language switch (keeps the browser scroll anchor)', () => {
+  it('shows every season running this month (December: Saint-Nicolas and Christmas)', () => {
+    vi.setSystemTime(new Date(2026, 11, 3, 12));
     renderHome(0);
-    const before = tile('Sans lait ?');
-    fireEvent.click(screen.getByTestId('to-nl'));
-    expect(tile('Zonder melk?')).toBe(before);
+    const seasons = within(screen.getByRole('region', { name: 'La gamme actuelle' })).getAllByRole('article');
+    expect(seasons).toHaveLength(2);
+    expect(seasons[0]).toBe(screen.getByRole('article', { name: 'Saint-Nicolas' }));
+    expect(seasons[1]).toBe(screen.getByRole('article', { name: 'Noël & Nouvel An' }));
   });
 
-  it('the onboarding banner opens the module list', () => {
-    renderHome(0, { onbMod: 3 });
-    fireEvent.click(tile('Formation vente en 7 modules · 1 min de lecture par module'));
-    expect(state()).toMatchObject({ view: 'onb', onbMod: -1 });
-  });
-
-  it('a best seller opens its product sheet', () => {
+  it('after the period, no bundles block', () => {
+    vi.setSystemTime(new Date(2026, 11, 20, 12));
     renderHome(0);
-    fireEvent.click(tile('Croissant pur beurre'));
-    expect(state()).toMatchObject({ sel: 'croissant', stack: [] });
+    expect(screen.queryByText('Les bundles de la semaine')).toBeNull();
+  });
+
+  it('a product of the season of the moment opens its product sheet', () => {
+    renderHome(0);
+    const season = screen.getByRole('article', { name: 'Automne' });
+    expect(within(season).getByText('Offre 4 + 1 sur la brioche croustillante.')).toBeTruthy();
+    fireEvent.click(within(season).getByText('Brioche croustillante').closest('button')!);
+    expect(state()).toMatchObject({ sel: 'brioche', stack: [] });
   });
 });

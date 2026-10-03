@@ -20,7 +20,8 @@ export const seller = (id: string, d: [number, number, number, number], top: [st
 };
 
 /**
- * 3 allergens, 2 categories, 5 products, 3 seasons, 3 FAQ entries in 2 categories, 2 combos,
+ * 3 allergens, 2 categories, 5 products, 3 seasons, 3 FAQ entries in 2 categories (q1 has two
+ * sub-categories, only qa used), 2 combos,
  * 2 sellers. "ghost" is an id that resolves to nothing (typo in hand-entered data).
  */
 export const FIXTURE_BOOK: BookData = {
@@ -54,13 +55,17 @@ export const FIXTURE_BOOK: BookData = {
     { id: 's3', img: 'img/s/s3.png', m: [12], n: ['Fêtes', 'Feesten'], dates: ['décembre', 'december'], tip: ['Réserver', 'Reserveren'] },
   ],
   faq: [
-    { cat: 'q1', p: ['p1', 'ghost'], q: ['Question un ?', 'Vraag een?'], a: ['Réponse un', 'Antwoord een'] },
+    { cat: 'q1', sub: 'qa', p: ['p1', 'ghost'], q: ['Question un ?', 'Vraag een?'], a: ['Réponse un', 'Antwoord een'] },
     { cat: 'q2', q: ['Question deux ?', 'Vraag twee?'], a: ['Avec du beurre', 'Met boter'] },
     { cat: 'q1', p: ['p3', 'p1'], q: ['Question trois ?', 'Vraag drie?'], a: ['Réponse trois', 'Antwoord drie'] },
   ],
   faqCats: [
     { id: 'q1', n: ['Allergies', 'Allergieën'] },
     { id: 'q2', n: ['Commandes', 'Bestellingen'] },
+  ],
+  faqSubs: [
+    { id: 'qa', cat: 'q1', n: ['Gluten', 'Gluten'] },
+    { id: 'qb', cat: 'q1', n: ['Lait', 'Melk'] },
   ],
   services: [
     { id: 'sv', img: 'img/svc/sv.png', n: ['Service', 'Dienst'], how: ['Comment', 'Hoe'], delay: ['Délai', 'Termijn'], say: ['Dire', 'Zeggen'] },

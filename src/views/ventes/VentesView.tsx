@@ -35,7 +35,7 @@ export function VentesView() {
                   {/* Keyed by position: a combo may list the same product twice. */}
                   {c.items.map((m, i) => (
                     <button key={i + '-' + m.id} type="button" className={s.tile} title={m.name} onClick={() => actions.openProduct(m.id)}>
-                      <img src={m.img} alt="" loading="lazy" decoding="async" className={s.tileImg} />
+                      <img src={m.img} alt="" loading="lazy" decoding="async" className={m.photo ? `${s.tileImg} ${s.tileImgPhoto} photo` : s.tileImg} />
                       <span className={s.tileName}>{m.name}</span>
                     </button>
                   ))}

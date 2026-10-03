@@ -1,31 +1,14 @@
 import type { BookSource, Lang } from '../data/types';
-import { NAV, groupTitle, labels, locale, navLabel, type NavGroup, type View } from '../lib/i18n';
+import { groupTitle, labels, locale, navLabel, type NavGroup, type View } from '../lib/i18n';
 
 /**
  * Pure chrome logic (prototype `renderVals()` → navItem / tab() / moreGroups).
  */
 
-/** Sidebar entry: active only on its own view AND when there is no search text (`!s.q`, untrimmed). */
-export const isNavActive = (id: View, view: View, q: string): boolean => view === id && !q;
-
-export interface NavGroupVM {
-  key: NavGroup;
-  title: string;
-  items: { id: View; label: string }[];
-}
-
-/** Sidebar groups "Vente" / "Formation", in sidebar order. */
-export const navGroups = (lang: Lang): NavGroupVM[] =>
-  (['v', 'f'] as const).map(key => ({
-    key,
-    title: groupTitle(key, lang),
-    items: NAV.filter(d => d[3] === key).map(([id]) => ({ id, label: navLabel(id, lang) })),
-  }));
-
-/** Accessible name of the main navigation (sidebar or tab bar). */
+/** Accessible name of the main navigation (the tab bar). */
 export const navAria = (lang: Lang): string => (lang ? 'Navigatie' : 'Navigation');
 
-/** Views that have their own tab in the portrait tab bar. */
+/** Views that have their own tab in the tab bar. */
 export const TAB_IDS: readonly View[] = ['home', 'gamme', 'al', 'faq'];
 
 export type TabId = 'home' | 'gamme' | 'al' | 'faq' | 'more';
@@ -55,8 +38,10 @@ const MORE: readonly (readonly [NavGroup, readonly (readonly [View, string])[]])
     ['svc', 'img/svc/click-collect.png'],
     ['cons', 'img/s/winter-range.png'],
     ['stats', 'img/svc/b2b.png'],
+    ['obj', 'img/objectifs.svg'],
+    ['rem', 'img/s/valentines-day-range.png'],
   ]],
-  ['f', [['onb', 'img/onb/croissant.png']]],
+  ['f', [['bases', 'img/onb/phone-orders.png'], ['onb', 'img/onb/croissant.png']]],
 ];
 
 /** Tiles of the "Plus" sheet: the sections without a tab, grouped Vente / Formation. */

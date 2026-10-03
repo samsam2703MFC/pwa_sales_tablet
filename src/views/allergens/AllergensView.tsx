@@ -1,4 +1,5 @@
 import { useId, useMemo, useRef } from 'react';
+import { AllergenIcon } from '../../components/AllergenIcon';
 import { PageTitle } from '../../components/PageTitle';
 import { useApp } from '../../state/store';
 import { alA11y, allergenMatrix } from './allergens.logic';
@@ -7,7 +8,7 @@ import s from './AllergensView.module.css';
 const cx = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ');
 
 /**
- * Allergènes: multi-select of the customer's allergies, live compatible / traces counts,
+ * Allergènes: multi-select of the customer's allergies (chips and column heads with the allergen pictograms), live compatible / traces counts,
  * then the product × allergen matrix (status + name columns sticky while scrolling
  * horizontally; incompatible products dimmed), legend and safety note.
  */
@@ -43,6 +44,7 @@ export function AllergensView() {
               aria-pressed={c.on}
               onClick={() => actions.toggleAllergen(c.id)}
             >
+              <AllergenIcon id={c.id} size={20} stroke={1.75} className={s.chipIcon} />
               {c.name}
             </button>
           ))}
@@ -76,6 +78,7 @@ export function AllergensView() {
                 aria-label={h.name}
                 className={h.on ? `${s.code} ${s.codeOn}` : s.code}
               >
+                <AllergenIcon id={h.id} size={20} stroke={1.75} />
                 {h.code}
               </div>
             ))}

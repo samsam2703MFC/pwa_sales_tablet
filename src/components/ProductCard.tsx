@@ -1,12 +1,17 @@
 import { useId } from 'react';
+import { BOOK_SOURCE } from '../data/book';
 import type { ProductCardVM } from '../lib/catalog';
 import { useApp } from '../state/store';
+import { AllergenIcon } from './AllergenIcon';
 import s from './ProductCard.module.css';
 
 /**
  * Product card of the range grid ("La gamme"). The whole card opens the product sheet.
- * `details` = diet badge (top right) + allergen codes; the search results grid omits them,
- * as in the prototype.
+ * `details` = diet badge (top right) + allergen codes with their pictograms; the search results
+ * grid omits them, as in the prototype.
+ *
+ * With a BO book the picture area is square: a photo fills it, an illustration (or the
+ * placeholder) sits in the middle; the sample data keeps the prototype's 140 px band.
  */
 export function ProductCard({ p, details = true }: { p: ProductCardVM; details?: boolean }) {
   const { L, actions } = useApp();
@@ -21,8 +26,8 @@ export function ProductCard({ p, details = true }: { p: ProductCardVM; details?:
       aria-labelledby={labelledBy}
       aria-describedby={details && (p.als.length || p.alUnknown) ? `${id}-a` : undefined}
     >
-      <span className={s.media}>
-        <img src={p.img} alt="" loading="lazy" decoding="async" className={s.img} />
+      <span className={BOOK_SOURCE.kind === 'sample' ? s.media : `${s.media} ${s.square}`}>
+        <img src={p.img} alt="" loading="lazy" decoding="async" className={p.photo ? `${s.img} photo` : s.img} />
         <span className={s.badgesL} id={`${id}-b`}>
           {p.seasonal && <span className={s.season}>{p.seasonName}</span>}
           {p.best && <span className={s.best}>{L.top}</span>}
@@ -42,8 +47,11 @@ export function ProductCard({ p, details = true }: { p: ProductCardVM; details?:
         </span>
         {details && (
           <span className={s.codes} id={`${id}-a`}>
-            {p.als.map(a => (
-              <span key={a} className={s.code}>{a}</span>
+            {p.als.map((a, i) => (
+              <span key={a} className={s.code}>
+                <AllergenIcon id={p.alIds[i]} size={14} className={s.codeIcon} />
+                {a}
+              </span>
             ))}
             {/* Unverified allergen list (BO data): no codes must not read as "no allergen". */}
             {p.alUnknown && <span className={s.unk}>{L.alCheck}</span>}

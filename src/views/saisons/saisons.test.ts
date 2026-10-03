@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { BOOK } from '../../data/book';
 import { toSeasonVM } from '../../lib/seasons';
 import { FIXTURE_BOOK as F } from '../../test/fixtures';
-import { calendarRows, monthHeaders, seasonCards } from './saisons.logic';
+import { calendarRows, currentSeasonCards, monthHeaders, seasonCards } from './saisons.logic';
 
 describe('monthHeaders', () => {
   it('lists the 12 short month names and flags the current one (FR)', () => {
@@ -62,6 +62,18 @@ describe('seasonCards', () => {
   });
 });
 
+describe('currentSeasonCards (the cards of the Saisons page)', () => {
+  it('keeps only the seasons running this month, in data order, as full cards', () => {
+    expect(currentSeasonCards(0, 12, F.seasons, F.products).map(c => c.id)).toEqual(['s2', 's3']);
+    expect(currentSeasonCards(1, 4, F.seasons, F.products)).toEqual([{ ...toSeasonVM(F.seasons[0], 1, F.products), isNow: true }]);
+  });
+
+  it('is empty in a month without a season, or without seasons', () => {
+    expect(currentSeasonCards(0, 1, F.seasons, F.products)).toEqual([]);
+    expect(currentSeasonCards(0, 10, [], F.products)).toEqual([]);
+  });
+});
+
 describe('sample data (prototype golden values)', () => {
   /** Season id → months with a red bar, from the README. */
   const MONTHS: Record<string, number[]> = {
@@ -93,5 +105,10 @@ describe('sample data (prototype golden values)', () => {
     expect(now(11)).toEqual(['automne', 'stnicolas']);
     expect(now(12)).toEqual(['stnicolas', 'noel']);
     expect(now(4)).toEqual(['paques']);
+  });
+
+  it('cards of the Saisons page', () => {
+    expect(currentSeasonCards(0, 10).map(c => c.name)).toEqual(['Automne']);
+    expect(currentSeasonCards(1, 11).map(c => c.name)).toEqual(['Herfst', 'Sinterklaas']);
   });
 });

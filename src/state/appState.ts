@@ -20,6 +20,8 @@ export interface AppState {
   /** Excluded allergen ids (allergen matrix). */
   ex: string[];
   faqCat: string;
+  /** FAQ sub-category chip under `faqCat` ('all' = every question of the category). */
+  faqSub: string;
   /** Index (in BOOK.faq) of the open FAQ answer, -1 = none. */
   faqOpen: number;
   /** Product shown in the drawer. */
@@ -39,7 +41,7 @@ export interface AppState {
 }
 
 export const initialState = (lang: Lang = config.defaultLang): AppState => ({
-  view: 'home', lang, q: '', cat: 'all', vegan: false, ex: [], faqCat: 'all', faqOpen: 0,
+  view: 'home', lang, q: '', cat: 'all', vegan: false, ex: [], faqCat: 'all', faqSub: 'all', faqOpen: 0,
   sel: null, stack: [], selFaq: -1, stSel: 'team', stPer: 'week', onbMod: -1, onbFull: false, more: false,
 });
 
@@ -69,7 +71,8 @@ export const transitions = {
   toggleAllergen: (id: string) => (s: AppState): Partial<AppState> => ({
     ex: s.ex.includes(id) ? s.ex.filter(e => e !== id) : [...s.ex, id],
   }),
-  setFaqCat: (id: string) => (): Partial<AppState> => ({ faqCat: id, faqOpen: -1 }),
+  setFaqCat: (id: string) => (): Partial<AppState> => ({ faqCat: id, faqSub: 'all', faqOpen: -1 }),
+  setFaqSub: (id: string) => (): Partial<AppState> => ({ faqSub: id, faqOpen: -1 }),
   toggleFaq: (i: number) => (s: AppState): Partial<AppState> => ({ faqOpen: s.faqOpen === i ? -1 : i }),
   toggleSelFaq: (i: number) => (s: AppState): Partial<AppState> => ({ selFaq: s.selFaq === i ? -1 : i }),
   /** Ranking row: select the seller, or back to the team if already selected. */
@@ -89,6 +92,7 @@ export interface Actions {
   toggleAllergen: (id: string) => void;
   resetEx: () => void;
   setFaqCat: (id: string) => void;
+  setFaqSub: (id: string) => void;
   toggleFaq: (i: number) => void;
   openProduct: (id: string) => void;
   closeProduct: () => void;

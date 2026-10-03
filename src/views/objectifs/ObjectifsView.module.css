@@ -1,0 +1,11 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.note {
+  margin: 0;
+  font-size: 16px;
+  color: var(--color-text-muted);
+}

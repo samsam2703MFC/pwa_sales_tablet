@@ -31,12 +31,14 @@ export function validateBook(b: BookData): string[] {
   unique('products', b.products);
   unique('seasons', b.seasons);
   unique('faqCats', b.faqCats);
+  unique('faqSubs', b.faqSubs);
   unique('services', b.services);
   unique('stats.sellers', b.stats.sellers);
 
   // Ids the filter chips use for "every category" (Tout) and "the whole team" (Équipe).
   if (categories.has('all')) errors.push('categories : « all » est réservé (chip « Tout »)');
   if (faqCats.has('all')) errors.push('faqCats : « all » est réservé (chip « Tout »)');
+  if (b.faqSubs.some(x => x.id === 'all')) errors.push('faqSubs : « all » est réservé (chip « Tout »)');
   if (b.stats.sellers.some(s => s.id === 'team')) errors.push('stats.sellers : « team » est réservé (chip « Équipe »)');
 
   const known = (where: string, set: Set<string>, list: readonly string[] | undefined) => {
@@ -51,9 +53,15 @@ export function validateBook(b: BookData): string[] {
     known(`${p.id}.cross`, products, p.cross);
     for (const a of p.al) if (p.tr.includes(a)) errors.push(`${p.id} : « ${a} » est à la fois dans al et dans tr`);
   }
+  for (const x of b.faqSubs) known(`faqSubs.${x.id}.cat`, faqCats, [x.cat]);
   b.faq.forEach((f, i) => {
     known(`faq[${i}].cat`, faqCats, [f.cat]);
     known(`faq[${i}].p`, products, f.p);
+    if (f.sub !== undefined) {
+      const x = b.faqSubs.find(x => x.id === f.sub);
+      if (!x) errors.push(`faq[${i}].sub : id inconnu « ${f.sub} »`);
+      else if (x.cat !== f.cat) errors.push(`faq[${i}].sub : « ${f.sub} » appartient à « ${x.cat} », pas à « ${f.cat} »`);
+    }
   });
   b.combos.forEach((c, i) => known(`combos[${i}].items`, products, c.items));
   for (const s of b.seasons) {

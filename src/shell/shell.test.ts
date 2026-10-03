@@ -1,36 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SAMPLE_SOURCE } from '../data/book';
-import { isNavActive, isTabActive, moreGroups, navGroups, sourceDate, sourceLabel, tabLabel } from './shell.logic';
-
-describe('isNavActive', () => {
-  it('is active on its own view without search text', () => {
-    expect(isNavActive('gamme', 'gamme', '')).toBe(true);
-    expect(isNavActive('home', 'gamme', '')).toBe(false);
-  });
-
-  it('is never active while there is search text (even only spaces, as in the prototype)', () => {
-    expect(isNavActive('gamme', 'gamme', 'noix')).toBe(false);
-    expect(isNavActive('gamme', 'gamme', ' ')).toBe(false);
-  });
-});
-
-describe('navGroups', () => {
-  it('builds the FR groups in sidebar order', () => {
-    const g = navGroups(0);
-    expect(g.map(x => x.title)).toEqual(['Vente', 'Formation']);
-    expect(g[0].items.map(i => i.label)).toEqual([
-      'Accueil', 'La gamme', 'Saisons', 'Allergènes', 'Vendre plus', 'FAQ clients', 'Services', 'Conservation', 'Statistiques',
-    ]);
-    expect(g[1].items).toEqual([{ id: 'onb', label: 'Onboarding' }]);
-  });
-
-  it('builds the NL groups', () => {
-    const g = navGroups(1);
-    expect(g.map(x => x.title)).toEqual(['Verkoop', 'Opleiding']);
-    expect(g[0].items[0]).toEqual({ id: 'home', label: 'Start' });
-    expect(g[0].items[5]).toEqual({ id: 'faq', label: 'FAQ klanten' });
-  });
-});
+import { NAV } from '../lib/i18n';
+import { isTabActive, moreGroups, sourceDate, sourceLabel, TAB_IDS, tabLabel } from './shell.logic';
 
 describe('isTabActive', () => {
   it('highlights the tab of the current view when the sheet is closed', () => {
@@ -45,7 +16,7 @@ describe('isTabActive', () => {
   });
 
   it('highlights "Plus" for views without their own tab', () => {
-    for (const v of ['saisons', 'ventes', 'svc', 'cons', 'stats', 'onb'] as const) {
+    for (const v of ['saisons', 'ventes', 'svc', 'cons', 'stats', 'obj', 'rem', 'bases', 'onb'] as const) {
       expect(isTabActive('more', v, false)).toBe(true);
       expect(isTabActive('home', v, false)).toBe(false);
     }
@@ -62,25 +33,41 @@ describe('tabLabel', () => {
 });
 
 describe('moreGroups', () => {
-  it('lists the sections without a tab, with their images', () => {
+  it('lists the sections without a tab, with their images ("Les bases" before "Onboarding")', () => {
     const fr = moreGroups(0);
     expect(fr.map(g => g.title)).toEqual(['Vente', 'Formation']);
-    expect(fr[0].items.map(i => i.id)).toEqual(['saisons', 'ventes', 'svc', 'cons', 'stats']);
+    expect(fr[0].items.map(i => i.id)).toEqual(['saisons', 'ventes', 'svc', 'cons', 'stats', 'obj', 'rem']);
+    // the targets and the customer remarks left the home page for their own sections
+    expect(fr[0].items.slice(5)).toEqual([
+      { id: 'obj', label: 'Objectifs', img: 'img/objectifs.svg' },
+      { id: 'rem', label: 'Remarques clients', img: 'img/s/valentines-day-range.png' },
+    ]);
     expect(fr[0].items[0]).toEqual({ id: 'saisons', label: 'Saisons', img: 'img/s/autumn-range.png' });
-    expect(fr[1].items).toEqual([{ id: 'onb', label: 'Onboarding', img: 'img/onb/croissant.png' }]);
+    expect(fr[1].items).toEqual([
+      { id: 'bases', label: 'Les bases', img: 'img/onb/phone-orders.png' },
+      { id: 'onb', label: 'Onboarding', img: 'img/onb/croissant.png' },
+    ]);
   });
 
   it('translates labels to NL', () => {
     const nl = moreGroups(1);
     expect(nl.map(g => g.title)).toEqual(['Verkoop', 'Opleiding']);
-    expect(nl[0].items.map(i => i.label)).toEqual(['Seizoenen', 'Meer verkopen', 'Diensten', 'Bewaring', 'Statistieken']);
+    expect(nl[0].items.map(i => i.label)).toEqual(['Seizoenen', 'Meer verkopen', 'Diensten', 'Bewaring', 'Statistieken', 'Doelen', 'Klantenopmerkingen']);
+    expect(nl[1].items.map(i => i.label)).toEqual(['De basis', 'Onboarding']);
+  });
+
+  it('together with the tabs, reaches every section exactly once', () => {
+    const inSheet = moreGroups(0).flatMap(g => g.items.map(i => i.id));
+    const all = [...TAB_IDS, ...inSheet];
+    expect(new Set(all).size).toBe(all.length);
+    expect([...all].sort()).toEqual(NAV.map(([id]) => id).sort());
   });
 });
 
 describe('sourceLabel — data-source indicator', () => {
   const bo = { kind: 'bo', version: 'v1', generatedAt: '2026-10-02T09:12:00+02:00', shop: { id: '4', name: 'Ixelles' } } as const;
 
-  it('sample: the prototype sentence (sidebar) or a short label (portrait header)', () => {
+  it("sample: a short label (top bar pill), or the prototype's long sentence", () => {
     expect(sourceLabel(SAMPLE_SOURCE, 0, true)).toBe("Données d'exemple — à remplacer par les fiches produit officielles.");
     expect(sourceLabel(SAMPLE_SOURCE, 0)).toBe("Données d'exemple");
     expect(sourceLabel(SAMPLE_SOURCE, 1)).toBe('Voorbeeldgegevens');

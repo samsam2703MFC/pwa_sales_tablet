@@ -81,15 +81,54 @@ test.describe('layout', () => {
     await more.getByRole('button', { name: 'Saisons' }).click();
     await expect(pageTitle(page, 'Saisons')).toBeVisible();
     await expect(more).toBeHidden();
+    // No room for the date next to the search field.
+    await expect(page.locator('header > *:not(.sr-only)')).toHaveCount(1);
+
+    // The product sheet is a bottom sheet, the full width of the screen.
+    await openSection(page, 'La gamme');
+    await page.getByRole('main').getByRole('button', { name: 'Croissant pur beurre' }).first().click();
+    const sheet = page.getByRole('dialog');
+    await expect.poll(async () => {
+      const b = (await sheet.boundingBox())!;
+      return [Math.round(b.x), Math.round(b.width), Math.round(b.y + b.height)];
+    }).toEqual([0, viewport.width, viewport.height]);
+    expect((await sheet.boundingBox())!.y).toBeGreaterThan(0);
   });
 
-  test('landscape: sidebar navigation, no tab bar', async ({ page }, testInfo) => {
+  test('landscape: tab bar, no sidebar, side-panel product sheet', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'landscape', 'landscape layout only');
     await page.goto('/');
-    const sidebar = page.getByRole('complementary');
-    await expect(sidebar).toBeVisible();
+    // Shop request: the menu lives in the footer in landscape too.
+    await expect(page.getByRole('complementary')).toHaveCount(0);
     await expect(page.getByRole('navigation')).toHaveCount(1);
-    await expect(sidebar.getByRole('navigation').getByRole('button', { name: 'Onboarding', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Plus', exact: true })).toHaveCount(0);
+    const tabs = mainNav(page);
+    for (const label of ['Accueil', 'La gamme', 'Allergènes', 'FAQ', 'Plus']) {
+      await expect(tabs.getByRole('button', { name: label, exact: true })).toBeVisible();
+    }
+    const viewport = page.viewportSize()!;
+    const box = (await tabs.boundingBox())!;
+    expect(Math.round(box.y + box.height)).toBe(viewport.height);
+    expect(Math.round(box.width)).toBe(viewport.width);
+    // Top bar: logo, "Book vendeuses", data source, FR/NL; the date next to the search field.
+    await expect(page.getByText('Book vendeuses', { exact: true })).toBeVisible();
+    await expect(page.getByText("Données d'exemple", { exact: true })).toBeVisible();
+    await expect(page.locator('header > *:not(.sr-only)')).toHaveCount(2);
+
+    // "Plus" holds the other sections, Formation included ("Les bases", then "Onboarding").
+    await tabs.getByRole('button', { name: 'Plus', exact: true }).click();
+    const more = page.getByRole('dialog');
+    await expect(more.getByRole('button')).toHaveText(['Saisons', 'Vendre plus', 'Services', 'Conservation', 'Statistiques', 'Objectifs', 'Remarques clients', 'Les bases', 'Onboarding']);
+    await more.getByRole('button', { name: 'Les bases', exact: true }).click();
+    await expect(pageTitle(page, 'Les bases')).toBeVisible();
+    await expect(more).toBeHidden();
+
+    // The product sheet is a side panel on the right, full height.
+    await openSection(page, 'La gamme');
+    await page.getByRole('main').getByRole('button', { name: 'Croissant pur beurre' }).first().click();
+    const sheet = page.getByRole('dialog');
+    await expect.poll(async () => {
+      const b = (await sheet.boundingBox())!;
+      return [Math.round(b.x + b.width), Math.round(b.width), Math.round(b.y), Math.round(b.height)];
+    }).toEqual([viewport.width, 640, 0, viewport.height]);
   });
 });

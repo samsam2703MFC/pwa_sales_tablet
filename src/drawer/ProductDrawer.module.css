@@ -162,6 +162,13 @@
   mix-blend-mode: multiply;
 }
 
+/* A BO photo fills the whole square tile. */
+.tilePhoto {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
 .heroText {
   display: flex;
   flex-direction: column;
@@ -324,6 +331,10 @@
   font-size: 14px;
 }
 
+.alIcon {
+  flex: none;
+}
+
 .contains {
   background: var(--color-primary);
   color: #fff;
@@ -407,6 +418,10 @@
 .keep {
   font-size: 16px;
   line-height: 1.55;
+}
+
+.keepNone {
+  color: var(--color-text-muted);
 }
 
 /* --- "Ce que les clients demandent" ----------------------------------------- */

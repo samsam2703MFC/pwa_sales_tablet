@@ -3,19 +3,20 @@ import { PageTitle } from '../../components/PageTitle';
 import { PillRow, ProductPill } from '../../components/ProductPill';
 import { currentMonth } from '../../lib/date';
 import { useApp } from '../../state/store';
-import { calendarRows, monthHeaders, seasonCards, type SeasonCardVM } from './saisons.logic';
+import { calendarRows, currentSeasonCards, monthHeaders, type SeasonCardVM } from './saisons.logic';
 import s from './SaisonsView.module.css';
 
 /**
  * Saisons: 12-month calendar (one row per season, current month highlighted; scrolls
- * horizontally on narrow screens), then one card per season with its instruction and products.
+ * horizontally on narrow screens), then one full-width card per season running this month,
+ * with its instruction and products (the other seasons are only in the calendar).
  */
 export function SaisonsView() {
   const { lang, L } = useApp();
   const month = currentMonth();
   const months = useMemo(() => monthHeaders(lang, month), [lang, month]);
   const rows = useMemo(() => calendarRows(lang, month), [lang, month]);
-  const cards = useMemo(() => seasonCards(lang, month), [lang, month]);
+  const cards = useMemo(() => currentSeasonCards(lang, month), [lang, month]);
 
   return (
     <section className={s.page}>
@@ -52,40 +53,47 @@ export function SaisonsView() {
         </div>
       )}
 
-      <div className={s.cards}>
-        {cards.map(x => <SeasonCard key={x.id} season={x} />)}
-      </div>
+      {cards.length > 0 ? (
+        <div className={s.cards}>
+          {cards.map(x => <SeasonCard key={x.id} season={x} />)}
+        </div>
+      ) : (
+        <p className={s.empty}>{L.noSeasonNow}</p>
+      )}
     </section>
   );
 }
 
-/** Season card: illustration, name (+ "En ce moment"), dates, instruction, product pills. */
+/**
+ * Season card, full width: illustration on the left, then name (+ "En ce moment"), dates,
+ * instruction and the season's product pills, which wrap across the whole width.
+ */
 function SeasonCard({ season: x }: { season: SeasonCardVM }) {
   const { L } = useApp();
   return (
     <div className={s.card}>
-      <div className={s.cardHead}>
-        <img src={x.img} alt="" className={s.cardImg} />
+      <img src={x.img} alt="" className={s.cardImg} />
+      <div className={s.cardBody}>
         <div className={s.cardText}>
           <div className={s.titleRow}>
-            {/* h2 for the outline (cards sit right under the H1); styled as the prototype's H3. */}
+            {/* h2 for the outline (cards sit right under the H1). */}
             <h2 className={s.cardTitle}>{x.name}</h2>
             {x.isNow && <span className={s.now}>{L.now}</span>}
           </div>
           <span className={s.dates}>{x.dates}</span>
         </div>
+        {x.tip && (
+          <div className={s.tip}>
+            <span className={s.tipL}>{L.tipL} · </span>
+            {x.tip}
+          </div>
+        )}
+        {x.products.length > 0 && (
+          <PillRow gap={8}>
+            {x.products.map(p => <ProductPill key={p.id} p={p} size="md" />)}
+          </PillRow>
+        )}
       </div>
-      {x.tip && (
-        <div className={s.tip}>
-          <span className={s.tipL}>{L.tipL} · </span>
-          {x.tip}
-        </div>
-      )}
-      {x.products.length > 0 && (
-        <PillRow gap={8}>
-          {x.products.map(p => <ProductPill key={p.id} p={p} size="md" />)}
-        </PillRow>
-      )}
     </div>
   );
 }

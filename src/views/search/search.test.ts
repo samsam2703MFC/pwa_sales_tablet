@@ -114,14 +114,16 @@ describe('sample data (prototype golden values)', () => {
 
   it('FAQ', () => {
     const idx = (q: string) => search(q).faq.map(x => x.i);
-    expect(idx('gâteau')).toEqual([6]);
-    expect(idx('taart')).toEqual([6]);
-    expect(idx('acompte')).toEqual([8]);
-    expect(idx('voorschot')).toEqual([8]);
+    expect(idx('gâteau')).toEqual([25]);
+    expect(idx('taart')).toEqual([12, 13, 25]); // the two "Tartes" questions (NL), then the birthday cake
+    expect(idx('acompte')).toEqual([27]);
+    expect(idx('voorschot')).toEqual([27]);
     expect(idx('vegan')).toEqual([2]);
-    expect(idx('sans')).toEqual([0, 8]);
+    expect(idx('sans')).toEqual([0, 21, 27]);
     const r = search('taart');
     expect(r.products.map(p => p.id)).toEqual(['tarteriz', 'tartelette', 'galette', 'coeur', 'fraisier']);
-    expect(r.faq[0].f.q[0]).toBe("Peut-on commander un gâteau d'anniversaire ?");
+    expect(r.faq.map(x => x.f.q[0])).toEqual([
+      'Peut-on acheter une tarte en morceaux ?', 'Peut-on commander une tarte entière ?', "Peut-on commander un gâteau d'anniversaire ?",
+    ]);
   });
 });

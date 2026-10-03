@@ -74,20 +74,34 @@
   background: var(--color-primary);
 }
 
-/* --- Season cards -------------------------------------------------------- */
+/* --- Season cards: the seasons running now, one per row, full width ------ */
 .cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 14px;
 }
 
 .card {
   background: var(--color-surface);
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: 24px 28px;
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.cardBody {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-width: 0;
+}
+
+.empty {
+  margin: 0;
+  font-size: 17px;
+  color: var(--color-text-muted);
 }
 
 .cardHead {
@@ -97,8 +111,8 @@
 }
 
 .cardImg {
-  width: 64px;
-  height: 64px;
+  width: 96px;
+  height: 96px;
   object-fit: contain;
 }
 
@@ -119,7 +133,7 @@
 .cardTitle {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: 21px;
+  font-size: 26px;
   margin: 0;
   text-transform: uppercase;
 }

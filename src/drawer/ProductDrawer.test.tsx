@@ -65,6 +65,7 @@ describe('ProductDrawer', () => {
     expect(tiles[0].textContent).toBe('Gluten: Contient');
     expect(tiles[1].textContent).toBe('Crustacés');
     expect(tiles.find(t => t.textContent?.startsWith('Sésame'))!.textContent).toBe('Sésame: Traces possibles');
+    expect(tiles.every(t => t.querySelector('svg[aria-hidden="true"]'))).toBe(true); // the allergen pictograms
     // no linked FAQ for the croissant, no back button
     expect(within(d).queryByText('Ce que les clients demandent')).toBeNull();
     expect(within(d).getAllByRole('button').map(b => b.textContent)).toEqual(['Fermer', 'Café & latte2,80 €', "Jus d'orange pressé3,90 €"]);
